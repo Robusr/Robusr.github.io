@@ -159,8 +159,8 @@ html, body {
 /* ASCII logo */
 .ascii-logo {
   color: #A6E22E;
-  font-size: 9px;
-  line-height: 1.15;
+  font-size: 11px;
+  line-height: 1.2;
   white-space: pre;
   margin-bottom: 6px;
 }
@@ -221,7 +221,7 @@ html, body {
   .body { padding: 10px 12px; }
   .cmd-line, .input-line, #cmdInput { font-size: 13px; }
   .response { font-size: 12.5px; }
-  .ascii-logo { font-size: 6px; }
+  .ascii-logo { font-size: 7px; }
   .light { width: 10px; height: 10px; }
 }
 </style>
@@ -307,8 +307,6 @@ const t = {
       `Name: ${name}`,
       `${'-'.repeat(32)}`,
       bio.en,
-      '',
-      bio.zh,
     ].join('\n'),
     skillsTitle: '[*] Skills',
     contactTitle: '[@] Contact',
@@ -377,8 +375,6 @@ const t = {
       `Name: ${name}`,
       `${'-'.repeat(32)}`,
       bio.zh,
-      '',
-      bio.en,
     ].join('\n'),
     skillsTitle: '[*] 技能清单',
     contactTitle: '[@] 联系方式',
@@ -528,36 +524,69 @@ async function typeText(element, text, speed = 16) {
 
 // ============================================================
 //  ASCII Art: Image -> Text (reads name.png)
+//  Uses luminance + contrast stretch for crisp pixel output.
 // ============================================================
 async function imageToASCII(imagePath, maxWidth) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
-      const charRamp = ' .:-=+*#%@';           // 10-level grayscale ramp
-      const ratio    = img.height / img.width;
-      const width    = Math.min(maxWidth, img.width);
-      const height   = Math.max(1, Math.floor(width * ratio * 0.48));
+      try {
+        // Extended 16-level character ramp (dark -> bright)
+        const charRamp = ' .,:;+*?%S#@';
+        const ratio    = img.height / img.width;
+        const width    = Math.min(maxWidth, img.width);
+        // Terminal characters are ~2:1 height:width; 0.52 corrects for typical monospace
+        const height   = Math.max(4, Math.floor(width * ratio * 0.52));
 
-      const canvas = document.createElement('canvas');
-      canvas.width  = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
+        const canvas = document.createElement('canvas');
+        canvas.width  = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        // Black background for consistent luminance
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
 
-      const data = ctx.getImageData(0, 0, width, height).data;
-      let result = '';
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const i   = (y * width + x) * 4;
-          const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-          const idx = Math.floor(lum / 256 * charRamp.length);
-          result += charRamp[Math.min(idx, charRamp.length - 1)];
+        const data = ctx.getImageData(0, 0, width, height).data;
+
+        // --- First pass: find min/max luminance for contrast stretch ---
+        let minLum = 255, maxLum = 0;
+        const lums = [];
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const i   = (y * width + x) * 4;
+            const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            lums.push(lum);
+            if (lum < minLum) minLum = lum;
+            if (lum > maxLum) maxLum = lum;
+          }
         }
-        result += '\n';
+
+        // Avoid divide-by-zero on flat images
+        const range = maxLum - minLum || 1;
+
+        // --- Second pass: map to characters with contrast stretch ---
+        let result = '';
+        let idx = 0;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const stretched = ((lums[idx] - minLum) / range) * 255;
+            const ci = Math.floor(stretched / 256 * charRamp.length);
+            result += charRamp[Math.min(Math.max(ci, 0), charRamp.length - 1)];
+            idx++;
+          }
+          result += '\n';
+        }
+        resolve(result.trimEnd());
+      } catch (e) {
+        console.error('imageToASCII error:', e);
+        resolve(null);
       }
-      resolve(result.trimEnd());
     };
-    img.onerror = () => resolve(null);
+    img.onerror = (e) => {
+      console.error('Failed to load image:', imagePath, e);
+      resolve(null);
+    };
     img.src = imagePath;
   });
 }
@@ -566,7 +595,7 @@ async function imageToASCII(imagePath, maxWidth) {
 //  Startup: neofetch-style logo + system info
 // ============================================================
 async function showStartupScreen() {
-  const logo = await imageToASCII('./name.png', 48);
+  const logo = await imageToASCII('./name.png', 72);
 
   if (logo) {
     const logoLines = logo.split('\n');
@@ -589,10 +618,42 @@ async function showStartupScreen() {
       output.appendChild(line);
     }
   } else {
-    const sysDiv = document.createElement('div');
-    sysDiv.className = 'sysinfo';
-    sysDiv.textContent = tStr('sysinfo', personalInfo.name, personalInfo.tagline[locale]);
-    output.appendChild(sysDiv);
+    // No logo file -- show classic Ubuntu-style ASCII art as fallback
+    const fallbackLogo = [
+      '            .-/+oossssoo+/-.            ',
+      '        -+ssssssssssssssssssss+-        ',
+      '     -+ssssssssssssssssssssssssss+-     ',
+      '   -+ssssssssssssssssssssssssssssss+-   ',
+      '  :ssssssssssssssssssssssssssssssssss:  ',
+      ' :ssssssssssssssssssssssssssssssssssss: ',
+      ':ssssssssssssssssssssssssssssssssssssss:',
+      ':ssssssssssssssssssssssssssssssssssssss:',
+      ':ssssssssssssssssssssssssssssssssssssss:',
+      ' :ssssssssssssssssssssssssssssssssssss: ',
+      '  :ssssssssssssssssssssssssssssssssss:  ',
+      '   -+ssssssssssssssssssssssssssssss+-   ',
+      '     -+ssssssssssssssssssssssssss+-     ',
+      '        -+ssssssssssssssssssss+-        ',
+      '            .-/+oossssoo+/-.            ',
+    ].join('\n');
+
+    const logoLines = fallbackLogo.split('\n');
+    const sysLines  = tStr('sysinfo', personalInfo.name, personalInfo.tagline[locale]).split('\n');
+    const logoWidth = Math.max(...logoLines.map(l => l.length));
+    const pad = logoWidth + 4;
+
+    const maxRows = Math.max(logoLines.length, sysLines.length);
+    for (let r = 0; r < maxRows; r++) {
+      const logoPart = r < logoLines.length ? logoLines[r] : '';
+      const sysPart  = r < sysLines.length  ? sysLines[r]  : '';
+      const line = document.createElement('div');
+      line.style.whiteSpace = 'pre';
+      line.innerHTML =
+        `<span class="ascii-logo" style="display:inline;">${escapeHTML(logoPart)}</span>` +
+        `${' '.repeat(Math.max(0, pad - logoPart.length))}` +
+        `<span class="sysinfo" style="display:inline;">${escapeHTML(sysPart)}</span>`;
+      output.appendChild(line);
+    }
   }
 
   // Separator
