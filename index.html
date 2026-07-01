@@ -523,34 +523,46 @@ async function typeText(element, text, speed = 16) {
 }
 
 // ============================================================
-//  ASCII Pixel-Art Logo — "Robusr" text rendered at 100x13
-//  Generated via Pillow (Menlo 18pt, binarised).  Regenerate:
-//    python3 scripts/ascii_gen.py
+//  ASCII Pixel-Art Logo — italic "Robusr" + wrench (93x14)
+//  Left (cols 0-64): italic "Robusr" text  -> white
+//  Right (cols 65+):  wrench icon          -> amber
+//  Regenerate:  python3 scripts/ascii_gen.py
 // ============================================================
-const LOGO_ART = [
-'                  #######                #                                                          ',
-'                  ########               #                                                          ',
-'                  ##   ###               #                                                          ',
-'                  ##    ###    #####     # ####     ##   ##     #####      ## ####                  ',
-'                  ##    ##    #######    #######    ##   ##    #######     #######                  ',
-'                  ##    ##   ###   ##    ###  ###   ##   ##    ##   ##     ####  #                  ',
-'                  #######    ##    ###   ##    ##   ##   ##    ##          ##                       ',
-'                  #######    ##     ##   ##    ##   ##   ##    #####       ##                       ',
-'                  ##   ###   ##     ##   ##    ##   ##   ##       ####     ##                       ',
-'                  ##    ##   ##    ###   ##    ##   ##   ##         ##     ##                       ',
-'                  ##    ###  ###   ##    ###  ###   ##  ###    #    ##     ##                       ',
-'                  ##     ##   #######    #######    #######    #######     ##                       ',
-'                  ##     ###   #####     # ####      ### ##     #####      ##                       ',
-].join('\n');
+const LOGO_LINES = [
+'                         ## #####    ##    ##      #  ###     ###            ####            ',
+'                         #########   ##    ##          ##     #             ######           ',
+'  #######         #      ###   ###   ##    ##         ###            ##################      ',
+'#########      ######    ###    ##   ##    ##    ######              ####################    ',
+'####  ####    #######    ##     ##   ##    ##    ##                  ####################    ',
+'###    ##    ###   ###   ##     ##   ###  ###                        ####################    ',
+'###    ##    ##    ###   ##    ###   ######                          ##################      ',
+'###   ##    ###     ##   ##    ##    ##                                     ######           ',
+'########    ###     ##   ###  ###                                           ######           ',
+'########    ###    ###   ######                                             ######           ',
+'#### ####   ###    ##    ##                                                 ######           ',
+'###   ###   ####  ###                                                       ######           ',
+'###    ###   ######                                                          ####            ',
+'###     ##   ##                                                               ##             ',
+];
+const LOGO_SPLIT = 65;  // column where wrench section begins
 
 // ============================================================
 //  Startup: pixel logo + system info + full command list
 // ============================================================
 function showStartupScreen() {
-  // ---- Step 1: ASCII pixel-art logo ("Robusr" text, 100x13) ----
+  // ---- Step 1: Italic "Robusr" (white) + wrench icon (amber) ----
   const logoDiv = document.createElement('div');
   logoDiv.className = 'ascii-logo';
-  logoDiv.textContent = LOGO_ART;
+  for (const line of LOGO_LINES) {
+    const left  = line.slice(0, LOGO_SPLIT);
+    const right = line.slice(LOGO_SPLIT);
+    const row = document.createElement('div');
+    row.style.whiteSpace = 'pre';
+    row.innerHTML =
+      `<span style="color:#F8F8F2;">${escapeHTML(left)}</span>` +
+      `<span style="color:#FFBD2E;">${escapeHTML(right)}</span>`;
+    logoDiv.appendChild(row);
+  }
   output.appendChild(logoDiv);
 
   // ---- Step 2: System info ----
