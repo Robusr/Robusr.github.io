@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Personal homepage with terminal interface">
+<title>Terminal</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Fira Code', 'Menlo', 'Consolas', 'SF Mono', 'Monaco', monospace;
+}
+
+/* ===== Fullscreen Background ===== */
+.bg {
+  position: fixed;
+  inset: 0;
+  background: url('./Street.jpg') center / cover no-repeat;
+  z-index: 0;
+}
+
+/* ===== Terminal Window ===== */
+.terminal {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 750px);
+  max-height: 85vh;
+  margin: 5vh auto 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(30, 30, 40, 0.72);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.55),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  overflow: hidden;
+}
+
+/* ===== Title Bar ===== */
+.titlebar {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  background: rgba(50, 50, 58, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  user-select: none;
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.traffic-lights {
+  display: flex;
+  gap: 8px;
+  margin-right: 12px;
+}
+
+.light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.light.red    { background: #FF5F57; }
+.light.yellow { background: #FFBD2E; }
+.light.green  { background: #28CA41; }
+
+.title {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Terminal Body (output + input) ===== */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  cursor: text;
+  min-height: 120px;
+}
+
+/* Custom scrollbar */
+.body::-webkit-scrollbar { width: 5px; }
+.body::-webkit-scrollbar-track { background: transparent; }
+.body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+}
+.body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.22);
+}
+/* Firefox */
+.body { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+
+/* ===== Output Area ===== */
+.output {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmd-line {
+  display: flex;
+  flex-wrap: wrap;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.prompt-arrow { color: #A6E22E; }
+.prompt-path  { color: #66D9EF; }
+.cmd-text     { color: #F8F8F2; margin-left: 4px; word-break: break-all; }
+
+.response {
+  color: #C0C0C8;
+  font-size: 13.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding-bottom: 8px;
+}
+
+.response a {
+  color: #66D9EF;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.welcome {
+  color: #8888A0;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* ===== Input Line ===== */
+.input-line {
+  display: flex;
+  align-items: center;
+  line-height: 1.6;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+#cmdInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #F8F8F2;
+  font-family: inherit;
+  font-size: 14px;
+  caret-color: #A6E22E;
+  margin-left: 4px;
+  min-width: 20px;
+}
+
+#cmdInput::placeholder { color: rgba(255,255,255,0.2); }
+
+/* ===== Blinking Cursor (shown when input is focused) ===== */
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background: #A6E22E;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 520px) {
+  .terminal {
+    width: 96vw;
+    max-height: 88vh;
+    margin-top: 2vh;
+    border-radius: 8px;
+  }
+  .body { padding: 10px 12px; }
+  .cmd-line, .input-line, #cmdInput { font-size: 13px; }
+  .response { font-size: 12.5px; }
+  .light { width: 10px; height: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Fullscreen Background -->
+<div class="bg"></div>
+
+<!-- Terminal Window -->
+<div class="terminal">
+  <!-- Title Bar -->
+  <div class="titlebar">
+    <div class="traffic-lights">
+      <span class="light red"></span>
+      <span class="light yellow"></span>
+      <span class="light green"></span>
+    </div>
+    <span class="title">guest@personal-site — -zsh — 80×24</span>
+  </div>
+
+  <!-- Terminal Body -->
+  <div class="body" id="terminalBody">
+    <div class="output" id="output"></div>
+    <div class="input-line">
+      <span class="prompt-arrow">➜</span>
+      <span class="prompt-path">~</span>
+      <input type="text" id="cmdInput" placeholder="输入命令或问题…" autofocus
+             autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  Personal Info Configuration — 在这里填写你的个人信息
+// ============================================================
+const personalInfo = {
+  name: 'Robusr',
+  bio: '一名热爱技术与创造的开发者，喜欢探索前端工程、工具链和有趣的交互设计。',
+  skills: [
+    'JavaScript / TypeScript',
+    'React / Vue',
+    'Node.js',
+    'Python',
+    'Git / GitHub',
+    '前端工程化 (Webpack, Vite)',
+  ],
+  contact: {
+    email: 'your-email@example.com',
+    github: 'https://github.com/Robusr',
+  },
+  projects: [
+    { name: 'Personal Terminal Homepage', desc: '一个模拟 macOS 终端的个人主页', url: 'https://github.com/Robusr/Robusr.github.io' },
+    // 在此添加更多项目：
+    // { name: 'Project Name', desc: 'Description', url: 'https://...' },
+  ],
+};
+
+// ============================================================
+//  DOM References
+// ============================================================
+const terminalBody = document.getElementById('terminalBody');
+const output       = document.getElementById('output');
+const cmdInput     = document.getElementById('cmdInput');
+
+// ============================================================
+//  State
+// ============================================================
+let commandHistory = [];
+let historyIndex   = -1;
+let isTyping       = false;   // true while typewriter effect is running
+
+// ============================================================
+//  Helpers
+// ============================================================
+function scrollToBottom() {
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+/** Promise-based delay */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Create a command-line element (prompt + user text) and append to output.
+ * Returns the response div so caller can type into it.
+ */
+function appendCommandLine(cmd) {
+  const line = document.createElement('div');
+  line.className = 'cmd-line';
+  line.innerHTML = `<span class="prompt-arrow">➜</span> <span class="prompt-path">~</span> <span class="cmd-text">${escapeHTML(cmd)}</span>`;
+  output.appendChild(line);
+
+  const resp = document.createElement('div');
+  resp.className = 'response';
+  output.appendChild(resp);
+  return resp;
+}
+
+/** Escape HTML special chars */
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============================================================
+//  Typewriter Effect
+// ============================================================
+async function typeText(element, text, speed = 20) {
+  isTyping = true;
+  cmdInput.disabled = true;
+  element.textContent = '';
+
+  for (let i = 0; i < text.length; i++) {
+    element.textContent += text[i];
+    scrollToBottom();
+    // Slow down on punctuation for a more natural feel
+    const ch = text[i];
+    const pause = (ch === '.' || ch === '、' || ch === '。') ? speed * 4
+                : (ch === ',' || ch === '，') ? speed * 2
+                : speed;
+    await delay(pause);
+  }
+
+  isTyping = false;
+  cmdInput.disabled = false;
+  cmdInput.focus();
+  scrollToBottom();
+}
+
+// ============================================================
+//  Response Formatters (Shell-style output)
+// ============================================================
+function formatAbout() {
+  return [
+    `👤 ${personalInfo.name}`,
+    `─`.repeat(28),
+    personalInfo.bio,
+  ].join('\n');
+}
+
+function formatSkills() {
+  const lines = ['📦 技能清单', '─'.repeat(24)];
+  personalInfo.skills.forEach((s, i) => {
+    lines.push(`  ${String(i + 1).padStart(2, ' ')}. ${s}`);
+  });
+  return lines.join('\n');
+}
+
+function formatContact() {
+  return [
+    '📬 联系方式',
+    '─'.repeat(24),
+    `  Email:  ${personalInfo.contact.email}`,
+    `  GitHub: ${personalInfo.contact.github}`,
+  ].join('\n');
+}
+
+function formatProjects() {
+  const lines = ['🚀 项目作品', '═'.repeat(32)];
+  personalInfo.projects.forEach((p, i) => {
+    lines.push(`  ${i + 1}. ${p.name}`);
+    lines.push(`     ${p.desc}`);
+    lines.push(`     🔗 ${p.url}`);
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+function formatHelp() {
+  return [
+    '╔══════════════════════════════════╗',
+    '║     💻 可用命令 / Commands        ║',
+    '╠══════════════════════════════════╣',
+    '║  help     显示此帮助              ║',
+    '║  about    个人简介                ║',
+    '║  skills   技能列表                ║',
+    '║  contact  联系方式                ║',
+    '║  projects 项目作品                ║',
+    '║  clear    清屏                    ║',
+    '╠══════════════════════════════════╣',
+    '║  💬 也可以直接提问，例如：         ║',
+    '║  · 你叫什么名字？                 ║',
+    '║  · 你会什么？                    ║',
+    '║  · 怎么联系你？                  ║',
+    '║  · 你做过什么项目？              ║',
+    '╚══════════════════════════════════╝',
+  ].join('\n');
+}
+
+// ============================================================
+//  Natural Language Matching
+// ============================================================
+function matchNaturalLanguage(input) {
+  const lower = input.toLowerCase();
+
+  if (/name|名字|叫什么|是谁|称呼|姓名/.test(lower)) return 'about';
+  if (/skill|技能|会什么|能力|技术|tech|擅长|懂什么|你会/.test(lower)) return 'skills';
+  if (/contact|联系|email|邮箱|github|微信|电话|找到你|联系你|怎么联系/.test(lower)) return 'contact';
+  if (/project|项目|作品|portfolio|做过|写过/.test(lower)) return 'projects';
+  if (/bio|简介|介绍|about|关于|背景|who|你是/.test(lower)) return 'about';
+
+  return null;
+}
+
+// ============================================================
+//  Command Execution
+// ============================================================
+async function executeCommand(raw) {
+  const cmd = raw.trim();
+  if (!cmd) return;
+
+  // Record history (don't duplicate consecutive same commands)
+  if (commandHistory.length === 0 || commandHistory[commandHistory.length - 1] !== cmd) {
+    commandHistory.push(cmd);
+  }
+  historyIndex = commandHistory.length;
+
+  // Append command line to output
+  const respDiv = appendCommandLine(cmd);
+  scrollToBottom();
+
+  let responseText = '';
+
+  // --- Exact command matching (including aliases) ---
+  const lower = cmd.toLowerCase();
+
+  if (lower === 'help' || lower === 'h' || lower === '?') {
+    responseText = formatHelp();
+  } else if (lower === 'about' || lower === 'whoami') {
+    responseText = formatAbout();
+  } else if (lower === 'skills' || lower === 'skill') {
+    responseText = formatSkills();
+  } else if (lower === 'contact') {
+    responseText = formatContact();
+  } else if (lower === 'projects' || lower === 'project' || lower === 'portfolio') {
+    responseText = formatProjects();
+  } else if (lower === 'clear' || lower === 'cls') {
+    output.innerHTML = '';
+    cmdInput.value = '';
+    cmdInput.focus();
+    return; // clear 不需要打字机效果
+  } else {
+    // --- Natural language fallback ---
+    const intent = matchNaturalLanguage(cmd);
+    if (intent === 'about') {
+      responseText = formatAbout();
+    } else if (intent === 'skills') {
+      responseText = formatSkills();
+    } else if (intent === 'contact') {
+      responseText = formatContact();
+    } else if (intent === 'projects') {
+      responseText = formatProjects();
+    } else {
+      responseText = '抱歉，我还没学会回答这个问题。试试输入 help 看看我能做什么吧。';
+    }
+  }
+
+  // Typewriter output
+  await typeText(respDiv, responseText);
+}
+
+// ============================================================
+//  Welcome Message (shown on startup)
+// ============================================================
+function showWelcome() {
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome';
+  welcome.innerHTML = [
+    '<span style="color:#A6E22E;">╭────────────────────────────────────────╮</span>',
+    '<span style="color:#A6E22E;">│</span>  <span style="color:#F8F8F2;font-weight:bold;">欢迎来到 ' + escapeHTML(personalInfo.name) + ' 的个人主页</span>     <span style="color:#A6E22E;">│</span>',
+    '<span style="color:#A6E22E;">│</span>                                        <span style="color:#A6E22E;">│</span>',
+    '<span style="color:#A6E22E;">│</span>  输入 <span style="color:#66D9EF;">help</span> 查看可用命令              <span style="color:#A6E22E;">│</span>',
+    '<span style="color:#A6E22E;">│</span>  也可以直接向我提问，例如：            <span style="color:#A6E22E;">│</span>',
+    '<span style="color:#A6E22E;">│</span>    <span style="color:#8888A0;">· 你叫什么名字？</span>                      <span style="color:#A6E22E;">│</span>',
+    '<span style="color:#A6E22E;">│</span>    <span style="color:#8888A0;">· 你会什么技能？</span>                      <span style="color:#A6E22E;">│</span>',
+    '<span style="color:#A6E22E;">│</span>    <span style="color:#8888A0;">· 怎么联系你？</span>                        <span style="color:#A6E22E;">│</span>',
+    '<span style="color:#A6E22E;">╰────────────────────────────────────────╯</span>',
+    '',
+  ].join('\n');
+  output.appendChild(welcome);
+  scrollToBottom();
+}
+
+// ============================================================
+//  Event Listeners
+// ============================================================
+
+// Enter / Arrow keys
+cmdInput.addEventListener('keydown', (e) => {
+  if (isTyping) {
+    e.preventDefault();
+    return;
+  }
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const cmd = cmdInput.value;
+    cmdInput.value = '';
+    executeCommand(cmd);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (historyIndex > 0) {
+      historyIndex--;
+      cmdInput.value = commandHistory[historyIndex];
+    }
+    // Move cursor to end
+    cmdInput.setSelectionRange(cmdInput.value.length, cmdInput.value.length);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (historyIndex < commandHistory.length - 1) {
+      historyIndex++;
+      cmdInput.value = commandHistory[historyIndex];
+    } else {
+      historyIndex = commandHistory.length;
+      cmdInput.value = '';
+    }
+    cmdInput.setSelectionRange(cmdInput.value.length, cmdInput.value.length);
+  }
+});
+
+// Click anywhere on body to focus input
+terminalBody.addEventListener('click', () => {
+  if (!isTyping) {
+    cmdInput.focus();
+  }
+});
+
+// Keep focus on input when clicking it directly
+cmdInput.addEventListener('click', (e) => {
+  e.stopPropagation();
+});
+
+// Prevent blur during typing
+cmdInput.addEventListener('blur', () => {
+  if (!isTyping) {
+    // Allow natural blur, but re-focus shortly after to keep terminal feel
+    // Only re-focus if the user didn't intentionally click away
+  }
+});
+
+// ============================================================
+//  Init
+// ============================================================
+showWelcome();
+cmdInput.focus();
+</script>
+
+</body>
+</html>
