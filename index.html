@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Robusr's Utopia">
-<title>Robusr's Utopia</title>
+<title>guest@Robusr's Utopia</title>
 <style>
 /* ===== Reset & Base ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,9 +27,9 @@ html, body {
 .terminal {
   position: relative;
   z-index: 1;
-  width: min(92vw, 760px);
-  max-height: 85vh;
-  margin: 5vh auto 0;
+  width: min(94vw, 780px);
+  max-height: 88vh;
+  margin: 3vh auto 0;
   display: flex;
   flex-direction: column;
   background: rgba(30, 30, 40, 0.72);
@@ -89,7 +89,7 @@ html, body {
   overflow-y: auto;
   padding: 14px 16px;
   cursor: text;
-  min-height: 120px;
+  min-height: 150px;
 }
 
 /* Custom scrollbar */
@@ -132,12 +132,12 @@ html, body {
 }
 
 .response a        { color: #66D9EF; text-decoration: underline; text-underline-offset: 3px; }
-.response .hl      { color: #A6E22E; }                    /* highlight */
-.response .dim     { color: #8888A0; }                    /* dimmed / secondary */
-.response .accent  { color: #66D9EF; }                    /* accent / links */
-.response .header  { color: #F8F8F2; font-weight: bold; } /* section headers */
-.response .warn    { color: #FFBD2E; }                    /* warnings */
-.response .err     { color: #F92672; }                    /* errors */
+.response .hl      { color: #A6E22E; }
+.response .dim     { color: #8888A0; }
+.response .accent  { color: #66D9EF; }
+.response .bold    { color: #F8F8F2; font-weight: bold; }
+.response .warn    { color: #FFBD2E; }
+.response .err     { color: #F92672; }
 .response .tag     {
   display: inline-block;
   color: #FFBD2E;
@@ -154,6 +154,23 @@ html, body {
   font-size: 13px;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+/* ASCII logo — smaller line-height for pixel art */
+.ascii-logo {
+  color: #A6E22E;
+  font-size: 9px;
+  line-height: 1.15;
+  white-space: pre;
+  margin-bottom: 6px;
+}
+
+.sysinfo {
+  color: #C0C0C8;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin-bottom: 8px;
 }
 
 /* ===== Input Line ===== */
@@ -196,14 +213,15 @@ html, body {
 /* ===== Mobile ===== */
 @media (max-width: 520px) {
   .terminal {
-    width: 96vw;
-    max-height: 88vh;
-    margin-top: 2vh;
+    width: 97vw;
+    max-height: 90vh;
+    margin-top: 1vh;
     border-radius: 8px;
   }
   .body { padding: 10px 12px; }
   .cmd-line, .input-line, #cmdInput { font-size: 13px; }
   .response { font-size: 12.5px; }
+  .ascii-logo { font-size: 6px; }
   .light { width: 10px; height: 10px; }
 }
 </style>
@@ -219,13 +237,13 @@ html, body {
       <span class="light yellow"></span>
       <span class="light green"></span>
     </div>
-    <span class="title" id="titleBar">Robusr's Utopia — -zsh</span>
+    <span class="title" id="titleBar">guest@Robusr's Utopia — -zsh — 80x24</span>
   </div>
 
   <div class="body" id="terminalBody">
     <div class="output" id="output"></div>
     <div class="input-line">
-      <span class="prompt-arrow">➜</span>
+      <span class="prompt-arrow">$</span>
       <span class="prompt-path">~</span>
       <input type="text" id="cmdInput" autofocus
              autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -241,8 +259,8 @@ const personalInfo = {
   name:    'Robusr',
   tagline: { en: "Robusr's Utopia", zh: 'Robusr 的乌托邦' },
   bio:     {
-    en: 'An interesting old soul — coding, writing, designing, and drinking through life.',
-    zh: '一个有趣的老东西 — 编程、写作、设计、小酌，如是度过每一天。',
+    en: 'An interesting old soul -- coding, writing, designing, and drinking through life.',
+    zh: '一个有趣的老东西 -- 编程、写作、设计、小酌，如是度过每一天。',
   },
   skills: {
     en: ['Coding', 'Writing', 'Designing', 'Chating', 'Drinking'],
@@ -257,143 +275,218 @@ const personalInfo = {
 
 // ============================================================
 //  i18n — English-first; toggle with:  lang / zh / en
+//  ALL output is pure ASCII; no emoji anywhere.
 // ============================================================
 let locale = 'en';
 
 const t = {
   en: {
-    welcome: [
-      `╭──────────────────────────────────────────────╮`,
-      `│                                              │`,
-      `│         Welcome to Robusr's Utopia           │`,
-      `│                                              │`,
-      `│  Type <span class="accent">help</span> to see available commands           │`,
-      `│  Or just ask me anything, e.g.:              │`,
-      `│    <span class="dim">· Who are you?</span>                         │`,
-      `│    <span class="dim">· What can you do?</span>                    │`,
-      `│    <span class="dim">· Show me your projects</span>               │`,
-      `│                                              │`,
-      `╰──────────────────────────────────────────────╯`,
+    sysinfo: (name, tagline) => [
+      `${name}@${tagline}`,
+      `${'-'.repeat(28)}`,
+      `OS:      ${tagline}`,
+      `Host:    GitHub Pages`,
+      `Kernel:  HTML5 + CSS3 + JS`,
+      `Shell:   -zsh 5.9`,
     ].join('\n'),
-    placeholder: 'Type a command or question…',
+    welcome: [
+      `+----------------------------------------------+`,
+      `|                                              |`,
+      `|         Welcome to Robusr's Utopia           |`,
+      `|                                              |`,
+      `|  Type help to see available commands         |`,
+      `|  Or just ask me anything, e.g.:              |`,
+      `|    - Who are you?                            |`,
+      `|    - What can you do?                        |`,
+      `|    - Show me your projects                   |`,
+      `|                                              |`,
+      `+----------------------------------------------+`,
+    ].join('\n'),
+    placeholder: 'Type a command or question...',
     about: (name, bio) => [
-      `👤  ${name}`,
-      `${'─'.repeat(32)}`,
+      `Name: ${name}`,
+      `${'-'.repeat(32)}`,
       bio.en,
       '',
       bio.zh,
     ].join('\n'),
-    skillsTitle: '📦  Skills',
-    contactTitle: '📬  Contact',
+    skillsTitle: '[*] Skills',
+    contactTitle: '[@] Contact',
     contact: (c) => [
       `  Email:   ${c.email}`,
       `  GitHub:  ${c.github}`,
       `  WeChat:  ${c.wechat}`,
     ].join('\n'),
-    projectsLoading: 'Fetching repositories from GitHub…',
-    projectsFailed: '⚠  Failed to fetch repos. Check your network or add a token.',
-    projectsTitle: '🚀  GitHub Repositories',
+    projectsLoading: 'Fetching repositories from GitHub...',
+    projectsFailed: 'WARNING: Failed to fetch repos. Check your network or add a token.',
+    projectsTitle: '=== GitHub Repositories',
     projectsEmpty: '  No public repositories found.',
     forkTag: 'fork',
-    statsLoading: 'Fetching GitHub profile stats…',
-    statsFailed: '⚠  Failed to fetch profile stats.',
-    statsTitle: '📊  GitHub Stats',
-    tokenSet: '✅  Token saved for this session. API rate limit raised to 5,000 req/hr.',
-    tokenCleared: '🗑  Token cleared. Back to unauthenticated rate limit (60 req/hr).',
-    tokenBad: '⚠  Invalid token format. Use: token ghp_xxxxxxxxxxxxxxxxxxxx',
-    tokenHint: '💡  Tip: provide a GitHub Personal Access Token for higher API limits. Usage:  token ghp_xxxx',
+    statsLoading: 'Fetching GitHub profile stats...',
+    statsFailed: 'WARNING: Failed to fetch profile stats.',
+    statsTitle: '=== GitHub Stats',
+    tokenSet: '[OK] Token saved for this session. API rate limit raised to 5,000 req/hr.',
+    tokenCleared: '[CLEARED] Token removed. Back to unauthenticated rate limit (60 req/hr).',
+    tokenBad: 'WARNING: Invalid token format. Expected: ghp_xxxxxxxxxxxxxxxxxxxx or github_pat_xxxxxxxx',
+    tokenHint: 'TIP: Provide a GitHub Personal Access Token for higher API limits. Type: token',
+    tokenPrompt: 'Enter GitHub Personal Access Token (input hidden, press Enter to submit):',
+    tokenNoEcho: '(token input hidden -- paste or type, then press Enter)',
+    tokenCancelled: 'Token input cancelled.',
+    tokenStatus: (has) => has
+      ? '[KEY] Token is set (session only). Type token clear to remove.'
+      : '[NO KEY] No token set. Using unauthenticated access (60 req/hr). Type token to add one.',
+    tokenPermissions: [
+      '+============================================================================+',
+      '|  GitHub Token Permissions Required                                         |',
+      '+============================================================================+',
+      '|                                                                            |',
+      '|  For public repo access (this site only reads public data):                |',
+      '|    - Classic PAT:        no scopes needed (repo > public_repo optional)    |',
+      '|    - Fine-grained PAT:   "Public Repositories" read-only access            |',
+      '|                                                                            |',
+      '|  Creating a token:                                                         |',
+      '|    1. GitHub > Settings > Developer settings > Personal access tokens      |',
+      '|    2. Classic:    choose "repo" scope (or none for rate-limit only)        |',
+      '|    3. Fine-grained: "Public Repositories" > read-only                      |',
+      '|    4. Copy the token (starts with ghp_ or github_pat_)                     |',
+      '|                                                                            |',
+      '|  Security note:                                                            |',
+      '|    The token is stored in browser sessionStorage only.                     |',
+      '|    It is NEVER printed to the terminal, logged, or persisted to disk.      |',
+      '|    It is cleared when you close the browser tab.                           |',
+      '|    Use token clear to remove it manually.                                  |',
+      '|                                                                            |',
+      '+============================================================================+',
+    ].join('\n'),
     help: [
-      '╔══════════════════════════════════════╗',
-      '║     💻  Available Commands            ║',
-      '╠══════════════════════════════════════╣',
-      '║  help      Show this help             ║',
-      '║  about     Display bio                ║',
-      '║  skills    List skills                ║',
-      '║  contact   Show contact info          ║',
-      '║  projects  List GitHub repos          ║',
-      '║  stats     GitHub profile overview     ║',
-      '║  token     Set GitHub PAT             ║',
-      '║  lang      Toggle EN / 中文            ║',
-      '║  clear     Clear screen               ║',
-      '╠══════════════════════════════════════╣',
-      '║  💬  Or ask naturally:                ║',
-      '║  · Who are you?                       ║',
-      '║  · What can you do?                   ║',
-      '║  · How to reach you?                  ║',
-      '║  · Show me your projects              ║',
-      '╚══════════════════════════════════════╝',
+      '+==========================================+',
+      '|     [*]  Available Commands              |',
+      '+==========================================+',
+      '|  help       Show this help               |',
+      '|  about      Display bio                  |',
+      '|  skills     List skills                  |',
+      '|  contact    Show contact info            |',
+      '|  projects   List GitHub repos            |',
+      '|  stats      GitHub profile overview      |',
+      '|  token      Manage GitHub PAT            |',
+      '|  lang       Toggle EN / Chinese          |',
+      '|  clear      Clear screen                 |',
+      '+==========================================+',
+      '|  >  Or ask naturally:                    |',
+      '|  - Who are you?                          |',
+      '|  - What can you do?                      |',
+      '|  - How to reach you?                     |',
+      '|  - Show me your projects                 |',
+      '+==========================================+',
     ].join('\n'),
     notFound: "Sorry, I haven't learned how to answer that yet. Try typing help to see what I can do.",
-    langEN: '✨  Switched to English.',
-    langZH: '✨  已切换为中文。',
-    titleBar: "Robusr's Utopia — -zsh",
+    langEN: '--- Switched to English.',
+    langZH: '--- 已切换为中文。',
+    titleBar: "guest@Robusr's Utopia -- -zsh -- 80x24",
   },
   zh: {
-    welcome: [
-      `╭──────────────────────────────────────────────╮`,
-      `│                                              │`,
-      `│         欢迎来到 Robusr 的乌托邦              │`,
-      `│                                              │`,
-      `│  输入 <span class="accent">help</span> 查看可用命令                    │`,
-      `│  也可以直接向我提问，例如：                    │`,
-      `│    <span class="dim">· 你是谁？</span>                           │`,
-      `│    <span class="dim">· 你会什么？</span>                         │`,
-      `│    <span class="dim">· 看看你的项目</span>                     │`,
-      `│                                              │`,
-      `╰──────────────────────────────────────────────╯`,
+    sysinfo: (name, tagline) => [
+      `${name}@${tagline}`,
+      `${'-'.repeat(28)}`,
+      `系统:    ${tagline}`,
+      `主机:    GitHub Pages`,
+      `内核:    HTML5 + CSS3 + JS`,
+      `Shell:   -zsh 5.9`,
     ].join('\n'),
-    placeholder: '输入命令或问题…',
+    welcome: [
+      `+----------------------------------------------+`,
+      `|                                              |`,
+      `|         欢迎来到 Robusr 的乌托邦              |`,
+      `|                                              |`,
+      `|  输入 help 查看可用命令                       |`,
+      `|  也可以直接向我提问，例如：                    |`,
+      `|    - 你是谁？                                 |`,
+      `|    - 你会什么？                               |`,
+      `|    - 看看你的项目                             |`,
+      `|                                              |`,
+      `+----------------------------------------------+`,
+    ].join('\n'),
+    placeholder: '输入命令或问题...',
     about: (name, bio) => [
-      `👤  ${name}`,
-      `${'─'.repeat(32)}`,
+      `Name: ${name}`,
+      `${'-'.repeat(32)}`,
       bio.zh,
       '',
       bio.en,
     ].join('\n'),
-    skillsTitle: '📦  技能清单',
-    contactTitle: '📬  联系方式',
+    skillsTitle: '[*] 技能清单',
+    contactTitle: '[@] 联系方式',
     contact: (c) => [
       `  邮箱:    ${c.email}`,
       `  GitHub:  ${c.github}`,
       `  微信:    ${c.wechat}`,
     ].join('\n'),
-    projectsLoading: '正在从 GitHub 获取仓库列表…',
-    projectsFailed: '⚠  获取仓库失败。请检查网络或添加 token。',
-    projectsTitle: '🚀  GitHub 仓库',
+    projectsLoading: '正在从 GitHub 获取仓库列表...',
+    projectsFailed: 'WARNING: 获取仓库失败。请检查网络或添加 token。',
+    projectsTitle: '=== GitHub 仓库',
     projectsEmpty: '  暂无公开仓库。',
     forkTag: 'fork',
-    statsLoading: '正在获取 GitHub 统计数据…',
-    statsFailed: '⚠  获取统计数据失败。',
-    statsTitle: '📊  GitHub 统计',
-    tokenSet: '✅  Token 已保存，本次会话期间有效。API 速率上限提升至 5,000 次/小时。',
-    tokenCleared: '🗑  Token 已清除。恢复为未认证速率上限（60 次/小时）。',
-    tokenBad: '⚠  Token 格式不正确。用法：token ghp_xxxxxxxxxxxxxxxxxxxx',
-    tokenHint: '💡  提示：提供 GitHub Personal Access Token 可获得更高 API 限额。用法：token ghp_xxxx',
+    statsLoading: '正在获取 GitHub 统计数据...',
+    statsFailed: 'WARNING: 获取统计数据失败。',
+    statsTitle: '=== GitHub 统计',
+    tokenSet: '[OK] Token 已保存，本次会话期间有效。API 速率上限提升至 5,000 次/小时。',
+    tokenCleared: '[CLEARED] Token 已清除。恢复为未认证速率上限（60 次/小时）。',
+    tokenBad: 'WARNING: Token 格式不正确。应为: ghp_xxxxxxxxxxxxxxxxxxxx 或 github_pat_xxxxxxxx',
+    tokenHint: 'TIP: 提供 GitHub Personal Access Token 可获得更高 API 限额。输入: token',
+    tokenPrompt: '请输入 GitHub Personal Access Token（输入已隐藏，按 Enter 提交）：',
+    tokenNoEcho: '（Token 输入已隐藏 -- 粘贴或输入后按 Enter）',
+    tokenCancelled: '已取消 Token 输入。',
+    tokenStatus: (has) => has
+      ? '[KEY] Token 已设置（仅本次会话）。输入 token clear 可清除。'
+      : '[NO KEY] 未设置 Token。使用未认证访问（60 次/小时）。输入 token 添加。',
+    tokenPermissions: [
+      '+============================================================================+',
+      '|  GitHub Token 权限需求说明                                                  |',
+      '+============================================================================+',
+      '|                                                                            |',
+      '|  仅访问公开仓库数据（本站只读取公开信息）:                                    |',
+      '|    - Classic PAT:        无需勾选任何 scope（repo > public_repo 可选）       |',
+      '|    - Fine-grained PAT:   "Public Repositories" 只读权限                     |',
+      '|                                                                            |',
+      '|  创建 Token 步骤:                                                           |',
+      '|    1. GitHub > Settings > Developer settings > Personal access tokens       |',
+      '|    2. Classic:    选择 "repo" scope（或仅用于提高速率上限则不选）            |',
+      '|    3. Fine-grained: "Public Repositories" > read-only                       |',
+      '|    4. 复制 Token（以 ghp_ 或 github_pat_ 开头）                              |',
+      '|                                                                            |',
+      '|  安全说明:                                                                  |',
+      '|    Token 仅存储在浏览器 sessionStorage 中。                                   |',
+      '|    Token 绝不会被打印到终端、记录日志或持久化到磁盘。                          |',
+      '|    关闭浏览器标签页后 Token 自动清除。                                        |',
+      '|    使用 token clear 可手动清除。                                              |',
+      '|                                                                            |',
+      '+============================================================================+',
+    ].join('\n'),
     help: [
-      '╔══════════════════════════════════════╗',
-      '║     💻  可用命令                       ║',
-      '╠══════════════════════════════════════╣',
-      '║  help      显示此帮助                  ║',
-      '║  about     个人简介                   ║',
-      '║  skills    技能列表                   ║',
-      '║  contact   联系方式                   ║',
-      '║  projects  查看 GitHub 仓库            ║',
-      '║  stats     GitHub 统计概览             ║',
-      '║  token     设置 GitHub PAT            ║',
-      '║  lang      切换 EN / 中文              ║',
-      '║  clear     清屏                       ║',
-      '╠══════════════════════════════════════╣',
-      '║  💬  也可以直接提问：                   ║',
-      '║  · 你是谁？                            ║',
-      '║  · 你会什么？                          ║',
-      '║  · 怎么联系你？                        ║',
-      '║  · 你做过什么项目？                    ║',
-      '╚══════════════════════════════════════╝',
+      '+==========================================+',
+      '|     [*]  可用命令                         |',
+      '+==========================================+',
+      '|  help       显示此帮助                    |',
+      '|  about      个人简介                      |',
+      '|  skills     技能列表                      |',
+      '|  contact    联系方式                      |',
+      '|  projects   查看 GitHub 仓库              |',
+      '|  stats      GitHub 统计概览               |',
+      '|  token      管理 GitHub PAT              |',
+      '|  lang       切换 EN / 中文                |',
+      '|  clear      清屏                          |',
+      '+==========================================+',
+      '|  >  也可以直接提问：                       |',
+      '|  - 你是谁？                                |',
+      '|  - 你会什么？                              |',
+      '|  - 怎么联系你？                            |',
+      '|  - 你做过什么项目？                        |',
+      '+==========================================+',
     ].join('\n'),
     notFound: '抱歉，我还没学会回答这个问题。试试输入 help 看看我能做什么吧。',
-    langEN: '✨  Switched to English.',
-    langZH: '✨  已切换为中文。',
-    titleBar: "Robusr's Utopia — -zsh",
+    langEN: '--- Switched to English.',
+    langZH: '--- 已切换为中文。',
+    titleBar: "guest@Robusr's Utopia -- -zsh -- 80x24",
   }
 };
 
@@ -413,14 +506,15 @@ const titleBar     = document.getElementById('titleBar');
 // ============================================================
 //  State
 // ============================================================
-let commandHistory = [];
-let historyIndex   = -1;
-let isTyping       = false;
-let ghReposCache   = null;
-let ghProfileCache = null;
+let commandHistory    = [];
+let historyIndex      = -1;
+let isTyping          = false;
+let awaitingToken     = false;   // true = next Enter captures token
+let ghReposCache      = null;
+let ghProfileCache    = null;
 
 // ============================================================
-//  GitHub Token (session-scoped, stored in sessionStorage)
+//  GitHub Token (sessionStorage, never echoed)
 // ============================================================
 function getToken() {
   return sessionStorage.getItem('gh_token') || '';
@@ -432,8 +526,7 @@ function setToken(val) {
   } else {
     sessionStorage.removeItem('gh_token');
   }
-  // Invalidate caches so next fetch uses new credentials
-  ghReposCache = null;
+  ghReposCache   = null;
   ghProfileCache = null;
 }
 
@@ -462,8 +555,13 @@ function escapeHTML(str) {
 function appendCommandLine(cmd) {
   const line = document.createElement('div');
   line.className = 'cmd-line';
+  // Mask token value in displayed command
+  let displayCmd = cmd;
+  if (/^token\s+(?!clear$|permissions$)(\S+)/.test(cmd)) {
+    displayCmd = cmd.replace(/^(token\s+)(\S+)(.*)/, '$1****$3');
+  }
   line.innerHTML =
-    `<span class="prompt-arrow">➜</span> <span class="prompt-path">~</span> <span class="cmd-text">${escapeHTML(cmd)}</span>`;
+    `<span class="prompt-arrow">$</span> <span class="prompt-path">~</span> <span class="cmd-text">${escapeHTML(displayCmd)}</span>`;
   output.appendChild(line);
 
   const resp = document.createElement('div');
@@ -480,8 +578,17 @@ function appendInstant(text) {
   return resp;
 }
 
+/** Append a system message (dimmed, no typewriter) */
+function appendSysMsg(text) {
+  const div = document.createElement('div');
+  div.className = 'response';
+  div.innerHTML = `<span class="dim">${escapeHTML(text)}</span>`;
+  output.appendChild(div);
+  return div;
+}
+
 // ============================================================
-//  Typewriter Effect (with HTML tag awareness)
+//  Typewriter Effect (HTML-aware, pure ASCII output)
 // ============================================================
 async function typeHTML(element, html, speed = 16) {
   isTyping = true;
@@ -525,7 +632,122 @@ async function typeText(element, text, speed = 16) {
 }
 
 // ============================================================
-//  GitHub API Helpers
+//  ASCII Art: Image -> Text (reads name.png, no emoji)
+// ============================================================
+async function imageToASCII(imagePath, maxWidth) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const charRamp = ' .:-=+*#%@';           // 10-level grayscale ramp (pure ASCII)
+      const ratio    = img.height / img.width;
+      const width    = Math.min(maxWidth, img.width);
+      const height   = Math.max(1, Math.floor(width * ratio * 0.48)); // 0.48 ~ font aspect
+
+      const canvas = document.createElement('canvas');
+      canvas.width  = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const data = ctx.getImageData(0, 0, width, height).data;
+      let result = '';
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i  = (y * width + x) * 4;
+          const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          const idx = Math.floor(lum / 256 * charRamp.length);
+          result += charRamp[Math.min(idx, charRamp.length - 1)];
+        }
+        result += '\n';
+      }
+      resolve(result.trimEnd());
+    };
+    img.onerror = () => resolve(null);
+    img.src = imagePath;
+  });
+}
+
+// ============================================================
+//  Startup: neofetch-style logo + system info
+// ============================================================
+async function showStartupScreen() {
+  const logo = await imageToASCII('./name.png', 48);
+
+  if (logo) {
+    const logoLines = logo.split('\n');
+    const sysLines  = tStr('sysinfo', personalInfo.name, personalInfo.tagline[locale]).split('\n');
+
+    // Print logo + system info side-by-side (neofetch style)
+    const logoDiv = document.createElement('div');
+    logoDiv.className = 'ascii-logo';
+    const sysDiv = document.createElement('div');
+    sysDiv.className = 'sysinfo';
+
+    // Calculate padding to align sysinfo next to logo
+    const logoWidth = Math.max(...logoLines.map(l => l.length));
+    const pad = logoWidth + 4; // 4 spaces gap
+
+    const maxRows = Math.max(logoLines.length, sysLines.length);
+    for (let r = 0; r < maxRows; r++) {
+      const logoPart = r < logoLines.length ? logoLines[r] : '';
+      const sysPart  = r < sysLines.length  ? sysLines[r]  : '';
+      // Left: logo, Right: sysinfo
+      if (r === 0) {
+        // First line: inline both
+        const line = document.createElement('div');
+        line.innerHTML =
+          `<span class="ascii-logo" style="display:inline;">${escapeHTML(logoPart)}</span>` +
+          `${' '.repeat(Math.max(0, pad - logoPart.length))}` +
+          `<span class="sysinfo" style="display:inline;">${escapeHTML(sysPart)}</span>`;
+        line.style.whiteSpace = 'pre';
+        output.appendChild(line);
+      } else if (r < logoLines.length && r < sysLines.length) {
+        const line = document.createElement('div');
+        line.innerHTML =
+          `<span class="ascii-logo" style="display:inline;">${escapeHTML(logoPart)}</span>` +
+          `${' '.repeat(Math.max(0, pad - logoPart.length))}` +
+          `<span class="sysinfo" style="display:inline;">${escapeHTML(sysPart)}</span>`;
+        line.style.whiteSpace = 'pre';
+        output.appendChild(line);
+      } else if (r < logoLines.length) {
+        // Extra logo lines
+        const line = document.createElement('div');
+        line.className = 'ascii-logo';
+        line.textContent = logoPart;
+        output.appendChild(line);
+      } else {
+        // Extra sysinfo lines
+        const line = document.createElement('div');
+        line.className = 'sysinfo';
+        line.textContent = sysPart;
+        output.appendChild(line);
+      }
+    }
+  } else {
+    // No logo file found — show system info only
+    const sysDiv = document.createElement('div');
+    sysDiv.className = 'sysinfo';
+    sysDiv.textContent = tStr('sysinfo', personalInfo.name, personalInfo.tagline[locale]);
+    output.appendChild(sysDiv);
+  }
+
+  // Separator
+  const sep = document.createElement('div');
+  sep.className = 'response';
+  sep.innerHTML = '<span class="dim">' + '-'.repeat(48) + '</span>';
+  output.appendChild(sep);
+
+  // Welcome box
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome';
+  welcome.textContent = tStr('welcome');
+  output.appendChild(welcome);
+
+  scrollToBottom();
+}
+
+// ============================================================
+//  GitHub API
 // ============================================================
 async function ghFetch(path) {
   const res = await fetch(`https://api.github.com${path}`, { headers: authHeaders() });
@@ -534,11 +756,8 @@ async function ghFetch(path) {
 }
 
 async function fetchGitHubProfile() {
-  try {
-    ghProfileCache = await ghFetch('/users/Robusr');
-  } catch {
-    ghProfileCache = null;
-  }
+  try { ghProfileCache = await ghFetch('/users/Robusr'); }
+  catch { ghProfileCache = null; }
 }
 
 async function fetchGitHubRepos() {
@@ -548,13 +767,11 @@ async function fetchGitHubRepos() {
       originals: data.filter(r => !r.fork),
       forks:     data.filter(r => r.fork),
     };
-  } catch {
-    ghReposCache = null;
-  }
+  } catch { ghReposCache = null; }
 }
 
 // ============================================================
-//  Format:  projects
+//  Format: projects
 // ============================================================
 function formatProjects() {
   if (!ghReposCache) {
@@ -562,7 +779,7 @@ function formatProjects() {
   }
 
   const { originals, forks } = ghReposCache;
-  const lines = [tStr('projectsTitle'), '═'.repeat(40), ''];
+  const lines = [tStr('projectsTitle'), '='.repeat(40), ''];
 
   if (originals.length === 0 && forks.length === 0) {
     lines.push(tStr('projectsEmpty'));
@@ -570,28 +787,28 @@ function formatProjects() {
   }
 
   originals.forEach((r, i) => {
-    lines.push(`  <span class="hl">${i + 1}.</span> <span class="header">${escapeHTML(r.name)}</span>`);
+    lines.push(`  <span class="hl">${i + 1}.</span> <span class="bold">${escapeHTML(r.name)}</span>`);
     if (r.description) {
       lines.push(`     <span class="dim">${escapeHTML(r.description)}</span>`);
     }
-    lines.push(`     <span class="accent">🔗 ${escapeHTML(r.html_url)}</span>`);
+    lines.push(`     <span class="accent">url: ${escapeHTML(r.html_url)}</span>`);
     const meta = [];
-    if (r.language) meta.push(`📄 ${escapeHTML(r.language)}`);
-    meta.push(`⭐ ${r.stargazers_count}`);
-    meta.push(`🔀 ${r.forks_count}`);
-    meta.push(`📅 ${new Date(r.created_at).getFullYear()}`);
+    if (r.language) meta.push(`lang: ${escapeHTML(r.language)}`);
+    meta.push(`* ${r.stargazers_count}`);
+    meta.push(`fork: ${r.forks_count}`);
+    meta.push(`since ${new Date(r.created_at).getFullYear()}`);
     lines.push(`     <span class="dim">${meta.join('  ')}</span>`);
     lines.push('');
   });
 
   if (forks.length > 0) {
-    lines.push('<span class="dim">─'.repeat(40) + '</span>');
-    lines.push(`<span class="dim">Forked:</span>`);
+    lines.push('<span class="dim">' + '-'.repeat(40) + '</span>');
+    lines.push('<span class="dim">Forked repositories:</span>');
     lines.push('');
     forks.forEach((r, i) => {
-      const desc = r.description ? ` — ${r.description}` : '';
+      const desc = r.description ? ` -- ${r.description}` : '';
       lines.push(`  <span class="dim">${i + 1}.</span> <span class="dim">${escapeHTML(r.name)}</span> <span class="tag">${tStr('forkTag')}</span><span class="dim">${escapeHTML(desc)}</span>`);
-      lines.push(`     <span class="accent">🔗 ${escapeHTML(r.html_url)}</span>`);
+      lines.push(`     <span class="accent">url: ${escapeHTML(r.html_url)}</span>`);
       lines.push('');
     });
   }
@@ -604,7 +821,7 @@ function formatProjects() {
 }
 
 // ============================================================
-//  Format:  stats
+//  Format: stats
 // ============================================================
 function formatStats() {
   if (!ghProfileCache) {
@@ -612,27 +829,21 @@ function formatStats() {
   }
 
   const p = ghProfileCache;
-  const lines = [tStr('statsTitle'), '═'.repeat(36), ''];
+  const lines = [tStr('statsTitle'), '='.repeat(36), ''];
 
-  lines.push(`  <span class="header">${escapeHTML(p.login)}</span>`);
+  lines.push(`  <span class="bold">${escapeHTML(p.login)}</span>`);
   if (p.name) lines.push(`  ${escapeHTML(p.name)}`);
-  if (p.bio) lines.push(`  <span class="dim">${escapeHTML(p.bio)}</span>`);
+  if (p.bio)  lines.push(`  <span class="dim">${escapeHTML(p.bio)}</span>`);
   lines.push('');
 
-  // Stats row
-  const stats = [
-    `📦  <span class="hl">${p.public_repos}</span> repos`,
-    `👥  <span class="hl">${p.followers}</span> followers`,
-    `💬  <span class="hl">${p.following}</span> following`,
-  ];
-  lines.push(`  ${stats.join('    ')}`);
+  lines.push(`  repos: <span class="hl">${p.public_repos}</span>    followers: <span class="hl">${p.followers}</span>    following: <span class="hl">${p.following}</span>`);
   lines.push('');
 
-  if (p.company)  lines.push(`  🏢  ${escapeHTML(p.company)}`);
-  if (p.location) lines.push(`  📍  ${escapeHTML(p.location)}`);
-  if (p.blog)     lines.push(`  🌐  <span class="accent">${escapeHTML(p.blog)}</span>`);
-  lines.push(`  🔗  <span class="accent">${escapeHTML(p.html_url)}</span>`);
-  lines.push(`  📅  Joined ${new Date(p.created_at).toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
+  if (p.company)  lines.push(`  org:   ${escapeHTML(p.company)}`);
+  if (p.location) lines.push(`  loc:   ${escapeHTML(p.location)}`);
+  if (p.blog)     lines.push(`  web:   <span class="accent">${escapeHTML(p.blog)}</span>`);
+  lines.push(`  url:   <span class="accent">${escapeHTML(p.html_url)}</span>`);
+  lines.push(`  since: ${new Date(p.created_at).toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
 
   lines.push('');
   lines.push(`  <span class="dim">Public gists: ${p.public_gists}</span>`);
@@ -641,14 +852,61 @@ function formatStats() {
 }
 
 // ============================================================
+//  Token Input Flow (secure: password field, never echoed)
+// ============================================================
+function enterTokenMode() {
+  awaitingToken = true;
+  cmdInput.type  = 'password';
+  cmdInput.value = '';
+  cmdInput.placeholder = tStr('tokenNoEcho');
+  cmdInput.focus();
+  appendSysMsg(tStr('tokenPrompt'));
+  scrollToBottom();
+}
+
+function exitTokenMode() {
+  awaitingToken = false;
+  cmdInput.type  = 'text';
+  cmdInput.placeholder = tStr('placeholder');
+}
+
+async function handleTokenSubmit(raw) {
+  exitTokenMode();
+
+  if (!raw || raw.trim() === '') {
+    appendSysMsg(tStr('tokenCancelled'));
+    scrollToBottom();
+    return;
+  }
+
+  const tok = raw.trim();
+
+  // Validate format
+  if (!/^(ghp_|github_pat_)/.test(tok) || tok.length < 20) {
+    await typeText(appendCommandLine('token ****').nextSibling, tStr('tokenBad'));
+    return;
+  }
+
+  setToken(tok);
+
+  // Display confirmation line (masked command)
+  appendCommandLine('token ****');
+  await typeText(output.lastChild, tStr('tokenSet'));
+
+  // Re-fetch with new credentials
+  fetchGitHubProfile();
+  fetchGitHubRepos();
+}
+
+// ============================================================
 //  Language Switch
 // ============================================================
 function switchLanguage(lang) {
   if (lang === locale) return;
   locale = lang;
-  cmdInput.placeholder = tStr('placeholder');
+  cmdInput.placeholder = awaitingToken ? tStr('tokenNoEcho') : tStr('placeholder');
   titleBar.textContent = tStr('titleBar');
-  appendInstant(lang === 'en' ? tStr('langEN') : tStr('langZH'));
+  appendSysMsg(lang === 'en' ? tStr('langEN') : tStr('langZH'));
   scrollToBottom();
 }
 
@@ -658,7 +916,7 @@ function switchLanguage(lang) {
 function matchNaturalLanguage(input) {
   const lower = input.toLowerCase();
 
-  // English patterns
+  // English
   if (/who (are|is) (you|this)|your name|what.*name/.test(lower)) return 'about';
   if (/what (can|do) you do|skill|ability|tech stack/.test(lower)) return 'skills';
   if (/contact|email|reach|find you|github|wechat|how.*(contact|reach)/.test(lower)) return 'contact';
@@ -667,7 +925,7 @@ function matchNaturalLanguage(input) {
   if (/stat|profile|overview|account/.test(lower)) return 'stats';
   if (/help|command|what.*available/.test(lower)) return 'help';
 
-  // Chinese patterns
+  // Chinese
   if (/名字|叫什么|是谁|称呼|姓名|你是谁/.test(lower)) return 'about';
   if (/技能|会什么|能力|技术|擅长|懂什么|你会/.test(lower)) return 'skills';
   if (/联系|邮箱|微信|电话|找到你|联系你|怎么联系/.test(lower)) return 'contact';
@@ -683,6 +941,13 @@ function matchNaturalLanguage(input) {
 // ============================================================
 async function executeCommand(raw) {
   const cmd = raw.trim();
+
+  // ---- Token input mode: capture token silently ----
+  if (awaitingToken) {
+    await handleTokenSubmit(cmd);
+    return;
+  }
+
   if (!cmd) return;
 
   // History
@@ -712,14 +977,14 @@ async function executeCommand(raw) {
     const list = personalInfo.skills[locale]
       .map((s, i) => `  ${String(i + 1).padStart(2, ' ')}. ${s}`)
       .join('\n');
-    await typeText(respDiv, `${title}\n${'─'.repeat(24)}\n${list}`);
+    await typeText(respDiv, `${title}\n${'-'.repeat(24)}\n${list}`);
   }
 
   // ---- Contact ----
   else if (lower === 'contact') {
     const lines = [
       tStr('contactTitle'),
-      '─'.repeat(24),
+      '-'.repeat(24),
       tStr('contact', personalInfo.contact),
     ].join('\n');
     await typeText(respDiv, lines);
@@ -748,30 +1013,28 @@ async function executeCommand(raw) {
   }
 
   // ---- Token ----
-  else if (lower.startsWith('token')) {
+  else if (lower === 'token') {
+    respDiv.remove(); // remove empty response div
+    const hasTok = !!getToken();
+    appendSysMsg(tStr('tokenStatus', hasTok));
+    scrollToBottom();
+    enterTokenMode();
+  } else if (lower === 'token clear') {
+    setToken('');
+    await typeText(respDiv, tStr('tokenCleared'));
+  } else if (lower === 'token permissions' || lower === 'token perms') {
+    await typeText(respDiv, tStr('tokenPermissions'));
+  } else if (lower.startsWith('token ')) {
+    // User typed "token <value>" directly — mask it and process
     const parts = cmd.split(/\s+/);
-    if (parts.length === 1) {
-      // Show current token status
-      const hasTok = !!getToken();
-      const msg = hasTok
-        ? '🔑  Token is set (session only).'
-        : '🔒  No token set. Using unauthenticated access (60 req/hr).';
-      await typeText(respDiv, `${msg}\n\n${tStr('tokenHint')}`);
-    } else if (parts[1].toLowerCase() === 'clear') {
-      setToken('');
-      await typeText(respDiv, tStr('tokenCleared'));
+    if (parts.length >= 2 && /^(ghp_|github_pat_)/.test(parts[1])) {
+      setToken(parts[1]);
+      // Command line already shows masked value via appendCommandLine
+      await typeText(respDiv, tStr('tokenSet'));
+      fetchGitHubProfile();
+      fetchGitHubRepos();
     } else {
-      // Validate token format (ghp_ or github_pat_ prefixes)
-      const tok = parts[1];
-      if (/^(ghp_|github_pat_)/.test(tok) && tok.length > 20) {
-        setToken(tok);
-        await typeText(respDiv, tStr('tokenSet'));
-        // Re-fetch with new token in background
-        fetchGitHubProfile();
-        fetchGitHubRepos();
-      } else {
-        await typeText(respDiv, tStr('tokenBad'));
-      }
+      await typeText(respDiv, tStr('tokenBad'));
     }
   }
 
@@ -797,25 +1060,22 @@ async function executeCommand(raw) {
   // ---- Natural language ----
   else {
     const intent = matchNaturalLanguage(cmd);
+    respDiv.innerHTML = '';
 
     if (intent === 'help') {
-      respDiv.innerHTML = '';
       await typeHTML(respDiv, tStr('help'));
     } else if (intent === 'about') {
-      respDiv.innerHTML = '';
       await typeText(respDiv, tStr('about', personalInfo.name, personalInfo.bio));
     } else if (intent === 'skills') {
       const title = tStr('skillsTitle');
       const list = personalInfo.skills[locale]
         .map((s, i) => `  ${String(i + 1).padStart(2, ' ')}. ${s}`)
         .join('\n');
-      respDiv.innerHTML = '';
-      await typeText(respDiv, `${title}\n${'─'.repeat(24)}\n${list}`);
+      await typeText(respDiv, `${title}\n${'-'.repeat(24)}\n${list}`);
     } else if (intent === 'contact') {
-      respDiv.innerHTML = '';
       await typeText(respDiv, [
         tStr('contactTitle'),
-        '─'.repeat(24),
+        '-'.repeat(24),
         tStr('contact', personalInfo.contact),
       ].join('\n'));
     } else if (intent === 'projects') {
@@ -838,17 +1098,6 @@ async function executeCommand(raw) {
       await typeText(respDiv, tStr('notFound'));
     }
   }
-}
-
-// ============================================================
-//  Welcome
-// ============================================================
-function showWelcome() {
-  const div = document.createElement('div');
-  div.className = 'welcome';
-  div.innerHTML = tStr('welcome');
-  output.appendChild(div);
-  scrollToBottom();
 }
 
 // ============================================================
@@ -879,6 +1128,13 @@ cmdInput.addEventListener('keydown', (e) => {
       cmdInput.value = '';
     }
     cmdInput.setSelectionRange(cmdInput.value.length, cmdInput.value.length);
+  } else if (e.key === 'Escape' && awaitingToken) {
+    // ESC to cancel token input
+    e.preventDefault();
+    exitTokenMode();
+    cmdInput.value = '';
+    appendSysMsg(tStr('tokenCancelled'));
+    scrollToBottom();
   }
 });
 
@@ -893,8 +1149,12 @@ cmdInput.addEventListener('click', (e) => e.stopPropagation());
 // ============================================================
 cmdInput.placeholder = tStr('placeholder');
 titleBar.textContent = tStr('titleBar');
-showWelcome();
-cmdInput.focus();
+
+// Bootstrap: logo -> system info -> welcome -> ready
+showStartupScreen().then(() => {
+  cmdInput.focus();
+  scrollToBottom();
+});
 
 // Pre-fetch GitHub data in background
 fetchGitHubProfile();
