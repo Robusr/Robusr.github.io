@@ -523,34 +523,50 @@ async function typeText(element, text, speed = 16) {
 }
 
 // ============================================================
-//  ASCII Pixel-Art Logo — "Robusr" text rendered at 100x13
-//  Generated via Pillow (Menlo 18pt, binarised).  Regenerate:
-//    python3 scripts/ascii_gen.py
+//  ASCII Pixel-Art Logo — italic "Robusr", per-letter colour
+//  65x13, generated via Pillow (Menlo 20pt, shear 0.22).
+//  Regenerate:  python3 scripts/ascii_gen.py
 // ============================================================
-const LOGO_ART = [
-'                  #######                #                                                          ',
-'                  ########               #                                                          ',
-'                  ##   ###               #                                                          ',
-'                  ##    ###    #####     # ####     ##   ##     #####      ## ####                  ',
-'                  ##    ##    #######    #######    ##   ##    #######     #######                  ',
-'                  ##    ##   ###   ##    ###  ###   ##   ##    ##   ##     ####  #                  ',
-'                  #######    ##    ###   ##    ##   ##   ##    ##          ##                       ',
-'                  #######    ##     ##   ##    ##   ##   ##    #####       ##                       ',
-'                  ##   ###   ##     ##   ##    ##   ##   ##       ####     ##                       ',
-'                  ##    ##   ##    ###   ##    ##   ##   ##         ##     ##                       ',
-'                  ##    ###  ###   ##    ###  ###   ##  ###    #    ##     ##                       ',
-'                  ##     ##   #######    #######    #######    #######     ##                       ',
-'                  ##     ###   #####     # ####      ### ##     #####      ##                       ',
-].join('\n');
+const LOGO_LINES = [
+'                         ##   ##     ##    ###   #######      ###',
+'                         ## #####    ##    ###    #######     ###',
+'   ######                #########   ##    ###         ##     #  ',
+'#########       ####     ###   ###   ##    ###        ###        ',
+'##### ####    #######    ###   ###   ##    ###   ##              ',
+'###    ###   #########   ##     ##   ##    ###                   ',
+'###    ##    ###   ###   ##     ##   ##   ###                    ',
+'###   ###    ##    ###   ##    ###   ###                         ',
+'########    ###     ##   ##    ###                               ',
+'########    ###    ###   ###  #                                  ',
+'#########   ###    ###   ##                                      ',
+'###   ###   ###   ###                                            ',
+'###    ###  ####                                                 ',
+];
+const LOGO_SPLITS = [10, 22, 35, 47, 59];  // end column of each letter except last
+const LOGO_COLORS = ['#FF6188','#FC9867','#FFD866','#A9DC76','#78DCE8','#AB9DF2'];
+const LOGO_WIDTH = 65;
 
 // ============================================================
 //  Startup: pixel logo + system info + full command list
 // ============================================================
 function showStartupScreen() {
-  // ---- Step 1: ASCII pixel-art logo ("Robusr" text, 100x13) ----
+  // ---- Step 1: Italic "Robusr" logo, each letter a different colour ----
   const logoDiv = document.createElement('div');
   logoDiv.className = 'ascii-logo';
-  logoDiv.textContent = LOGO_ART;
+  for (const line of LOGO_LINES) {
+    const row = document.createElement('div');
+    row.style.whiteSpace = 'pre';
+    let html = '';
+    let cursor = 0;
+    for (let i = 0; i < LOGO_COLORS.length; i++) {
+      const end = (i < LOGO_SPLITS.length) ? LOGO_SPLITS[i] : LOGO_WIDTH;
+      const seg = line.slice(cursor, end);
+      html += `<span style="color:${LOGO_COLORS[i]};">${escapeHTML(seg)}</span>`;
+      cursor = end;
+    }
+    row.innerHTML = html;
+    logoDiv.appendChild(row);
+  }
   output.appendChild(logoDiv);
 
   // ---- Step 2: System info ----
