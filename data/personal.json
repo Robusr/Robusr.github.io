@@ -1,0 +1,21 @@
+{
+  "name": "Robusr",
+  "tagline": {
+    "en": "Robusr's Utopia",
+    "zh": "Robusr 的乌托邦"
+  },
+  "bio": {
+    "en": "An interesting old soul -- coding, writing, designing, and drinking through life.",
+    "zh": "一个有趣的老东西 -- 编程、写作、设计、小酌，如是度过每一天。"
+  },
+  "skills": {
+    "en": ["Coding", "Writing", "Designing", "Chating", "Drinking"],
+    "zh": ["编程", "写作", "设计", "闲聊", "小酌"]
+  },
+  "contact": {
+    "email": "Robusr@outlook.com",
+    "github": "https://github.com/Robusr",
+    "wechat": "RobusrID"
+  },
+  "githubUser": "Robusr"
+}

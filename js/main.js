@@ -3,180 +3,25 @@
 // ============================================================
 
 // ============================================================
-//  Personal Info — dual-language (en / zh)
+//  Data — loaded from JSON at startup
 // ============================================================
-const personalInfo = {
-  name:    'Robusr',
-  tagline: { en: "Robusr's Utopia", zh: 'Robusr 的乌托邦' },
-  bio:     {
-    en: 'An interesting old soul -- coding, writing, designing, and drinking through life.',
-    zh: '一个有趣的老东西 -- 编程、写作、设计、小酌，如是度过每一天。',
-  },
-  skills: {
-    en: ['Coding', 'Writing', 'Designing', 'Chating', 'Drinking'],
-    zh: ['编程', '写作', '设计', '闲聊', '小酌'],
-  },
-  contact: {
-    email:  'Robusr@outlook.com',
-    github: 'https://github.com/Robusr',
-    wechat: 'RobusrID',
-  },
-};
+let personal = null;   // data/personal.json
+let i18n     = null;   // data/i18n.json
+let locale   = 'en';
 
 // ============================================================
-//  i18n — English-first; toggle with:  lang / zh / en
-//  ALL output is pure ASCII; no emoji anywhere.
+//  Template engine  (replaces {{var}} placeholders)
 // ============================================================
-let locale = 'en';
+function renderTemplate(tmpl, vars) {
+  return tmpl.replace(/\{\{(\w+)\}\}/g, (_, key) =>
+    vars[key] !== undefined ? vars[key] : `{{${key}}}`);
+}
 
-const t = {
-  en: {
-    sysinfo: (name, tagline) => [
-      `${name}@${tagline}`,
-      `${'-'.repeat(28)}`,
-      `OS:      ${tagline}`,
-      `Host:    GitHub Pages`,
-      `Kernel:  HTML5 + CSS3 + JS`,
-      `Shell:   -zsh 5.9`,
-    ].join('\n'),
-    welcome: [
-      `+----------------------------------------------+`,
-      `|                                              |`,
-      `|         Welcome to Robusr's Utopia           |`,
-      `|                                              |`,
-      `|  Type help to see available commands         |`,
-      `|  Or just ask me anything, e.g.:              |`,
-      `|    - Who are you?                            |`,
-      `|    - What can you do?                        |`,
-      `|    - Show me your projects                   |`,
-      `|                                              |`,
-      `+----------------------------------------------+`,
-    ].join('\n'),
-    placeholder: 'Type a command or question...',
-    about: (name, bio) => [
-      `Name: ${name}`,
-      `${'-'.repeat(32)}`,
-      bio.en,
-    ].join('\n'),
-    skillsTitle: '[*] Skills',
-    contactTitle: '[@] Contact',
-    contact: (c) => [
-      `  Email:   ${c.email}`,
-      `  GitHub:  ${c.github}`,
-      `  WeChat:  ${c.wechat}`,
-    ].join('\n'),
-    projectsLoading: 'Fetching repositories from GitHub...',
-    projectsFailed: 'WARNING: Failed to fetch repos. Please check your network and try again.',
-    projectsTitle: '=== GitHub Repositories',
-    projectsEmpty: '  No public repositories found.',
-    forkTag: 'fork',
-    statsLoading: 'Fetching GitHub profile stats...',
-    statsFailed: 'WARNING: Failed to fetch profile stats.',
-    statsTitle: '=== GitHub Stats',
-    help: [
-      '+==========================================+',
-      '|     [*]  Available Commands              |',
-      '+==========================================+',
-      '|  help       Show this help               |',
-      '|  about      Display bio                  |',
-      '|  skills     List skills                  |',
-      '|  contact    Show contact info            |',
-      '|  projects   List GitHub repos            |',
-      '|  stats      GitHub profile overview      |',
-      '|  lang       Toggle EN / Chinese          |',
-      '|  clear      Clear screen                 |',
-      '+==========================================+',
-      '|  >  Or ask naturally:                    |',
-      '|  - Who are you?                          |',
-      '|  - What can you do?                      |',
-      '|  - How to reach you?                     |',
-      '|  - Show me your projects                 |',
-      '|                                           |',
-      '|  >  Chat freely — I\'m AI-powered         |',
-      '|     with my own personality.              |',
-      '+==========================================+',
-    ].join('\n'),
-    notFound: "Sorry, I haven't learned how to answer that yet. Try typing help to see what I can do.",
-    langEN: '--- Switched to English.',
-    langZH: '--- 已切换为中文。',
-    titleBar: "guest@Robusr's Utopia -- -zsh -- 80x24",
-  },
-  zh: {
-    sysinfo: (name, tagline) => [
-      `${name}@${tagline}`,
-      `${'-'.repeat(28)}`,
-      `系统:    ${tagline}`,
-      `主机:    GitHub Pages`,
-      `内核:    HTML5 + CSS3 + JS`,
-      `Shell:   -zsh 5.9`,
-    ].join('\n'),
-    welcome: [
-      `+----------------------------------------------+`,
-      `|                                              |`,
-      `|         欢迎来到 Robusr 的乌托邦              |`,
-      `|                                              |`,
-      `|  输入 help 查看可用命令                       |`,
-      `|  也可以直接向我提问，例如：                    |`,
-      `|    - 你是谁？                                 |`,
-      `|    - 你会什么？                               |`,
-      `|    - 看看你的项目                             |`,
-      `|                                              |`,
-      `+----------------------------------------------+`,
-    ].join('\n'),
-    placeholder: '输入命令或问题...',
-    about: (name, bio) => [
-      `Name: ${name}`,
-      `${'-'.repeat(32)}`,
-      bio.zh,
-    ].join('\n'),
-    skillsTitle: '[*] 技能清单',
-    contactTitle: '[@] 联系方式',
-    contact: (c) => [
-      `  邮箱:    ${c.email}`,
-      `  GitHub:  ${c.github}`,
-      `  微信:    ${c.wechat}`,
-    ].join('\n'),
-    projectsLoading: '正在从 GitHub 获取仓库列表...',
-    projectsFailed: 'WARNING: 获取仓库失败。请检查网络后重试。',
-    projectsTitle: '=== GitHub 仓库',
-    projectsEmpty: '  暂无公开仓库。',
-    forkTag: 'fork',
-    statsLoading: '正在获取 GitHub 统计数据...',
-    statsFailed: 'WARNING: 获取统计数据失败。',
-    statsTitle: '=== GitHub 统计',
-    help: [
-      '+==========================================+',
-      '|     [*]  可用命令                         |',
-      '+==========================================+',
-      '|  help       显示此帮助                    |',
-      '|  about      个人简介                      |',
-      '|  skills     技能列表                      |',
-      '|  contact    联系方式                      |',
-      '|  projects   查看 GitHub 仓库              |',
-      '|  stats      GitHub 统计概览               |',
-      '|  lang       切换 EN / 中文                |',
-      '|  clear      清屏                          |',
-      '+==========================================+',
-      '|  >  也可以直接提问：                       |',
-      '|  - 你是谁？                                |',
-      '|  - 你会什么？                              |',
-      '|  - 怎么联系你？                            |',
-      '|  - 你做过什么项目？                        |',
-      '|                                             |',
-      '|  >  自由对话 — 我是 AI 驱动的聊天机器人     |',
-      '|     拥有我自己的人格设定。                  |',
-      '+==========================================+',
-    ].join('\n'),
-    notFound: '抱歉，我还没学会回答这个问题。试试输入 help 看看我能做什么吧。',
-    langEN: '--- Switched to English.',
-    langZH: '--- 已切换为中文。',
-    titleBar: "guest@Robusr's Utopia -- -zsh -- 80x24",
-  }
-};
-
-function tStr(key, ...args) {
-  const fn = t[locale][key];
-  return typeof fn === 'function' ? fn(...args) : fn;
+// i18n lookup with optional template variables
+function tStr(key, vars = {}) {
+  const tmpl = i18n?.[locale]?.[key];
+  if (!tmpl) return key;
+  return renderTemplate(tmpl, vars);
 }
 
 // ============================================================
@@ -218,29 +63,29 @@ const titleBar     = document.getElementById('titleBar');
 // ============================================================
 //  State
 // ============================================================
-let commandHistory = [];
-let historyIndex   = -1;
-let isTyping       = false;
-let ghReposCache   = null;
-let ghProfileCache = null;
-let streamAbort    = null;   // AbortController for cancelling LLM stream
-let streamCancelled = false; // true when user pressed Esc
+let commandHistory  = [];
+let historyIndex    = -1;
+let isTyping        = false;
+let ghReposCache    = null;
+let ghProfileCache  = null;
+let streamAbort     = null;   // AbortController for cancelling LLM stream
+let streamCancelled = false;  // true when user pressed Esc
 
 // ============================================================
 //  Helpers
 // ============================================================
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 function scrollToBottom() {
   terminalBody.scrollTop = terminalBody.scrollHeight;
 }
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function escapeHTML(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 function appendCommandLine(cmd) {
@@ -265,7 +110,7 @@ function appendSysMsg(text) {
 }
 
 // ============================================================
-//  Typewriter Effect (HTML-aware, pure ASCII output)
+//  Typewriter Effect (HTML-aware, renders tags correctly)
 // ============================================================
 async function typeHTML(element, html, speed = 16) {
   isTyping = true;
@@ -309,17 +154,14 @@ async function typeText(element, text, speed = 16) {
 }
 
 // ============================================================
-//  Streaming typewriter — driven by LLM SSE chunks
-//  Parses DeepSeek (OpenAI-compatible) SSE format:
-//    data: {"choices":[{"delta":{"content":"..."}}]}
-//    data: [DONE]
+//  Buffer LLM stream → parse Markdown → typewriter
+//  Buffers all SSE chunks, then renders Markdown as HTML and
+//  plays it with the typewriter effect for a consistent feel.
 // ============================================================
-async function typeStream(element, reader) {
-  isTyping = true;
-  cmdInput.disabled = true;
-
+async function bufferStream(reader) {
   const decoder = new TextDecoder();
   let buffer = '';
+  let fullText = '';
   let timeout;
 
   try {
@@ -343,28 +185,16 @@ async function typeStream(element, reader) {
         try {
           const json = JSON.parse(data);
           const content = json.choices?.[0]?.delta?.content;
-          if (content) {
-            element.innerHTML += escapeHTML(content).replace(/\n/g, '<br>');
-          }
+          if (content) fullText += content;
         } catch {}
       }
-      scrollToBottom();
     }
   } catch {
-    if (streamCancelled) {
-      element.innerHTML +=
-        '<span class="dim">\n--- Cancelled ---</span>';
-    } else {
-      element.innerHTML +=
-        '<span class="dim">\n--- Connection lost ---</span>';
-    }
+    // Aborted or network error — caller checks streamCancelled
   }
 
   clearTimeout(timeout);
-  isTyping = false;
-  cmdInput.disabled = false;
-  cmdInput.focus();
-  scrollToBottom();
+  return fullText;
 }
 
 // ============================================================
@@ -402,13 +232,16 @@ function showStartupScreen() {
   // ---- Step 2: System info ----
   const sysDiv = document.createElement('div');
   sysDiv.className = 'sysinfo';
-  sysDiv.textContent = tStr('sysinfo', 'guest', personalInfo.tagline[locale]);
+  sysDiv.textContent = tStr('sysinfo', {
+    name: 'guest',
+    tagline: personal?.tagline?.[locale] ?? '',
+  });
   output.appendChild(sysDiv);
 
   // ---- Step 3: Short hint ----
   const hintDiv = document.createElement('div');
   hintDiv.className = 'response';
-  hintDiv.innerHTML = '<span class="dim">' + escapeHTML(tStr('placeholder')) + '</span>';
+  hintDiv.innerHTML = `<span class="dim">${escapeHTML(tStr('placeholder'))}</span>`;
   output.appendChild(hintDiv);
 
   scrollToBottom();
@@ -424,13 +257,15 @@ async function ghFetch(path) {
 }
 
 async function fetchGitHubProfile() {
-  try { ghProfileCache = await ghFetch('/users/Robusr'); }
+  const user = personal?.githubUser ?? 'Robusr';
+  try { ghProfileCache = await ghFetch(`/users/${user}`); }
   catch { ghProfileCache = null; }
 }
 
 async function fetchGitHubRepos() {
+  const user = personal?.githubUser ?? 'Robusr';
   try {
-    const data = await ghFetch('/users/Robusr/repos?per_page=50&sort=updated');
+    const data = await ghFetch(`/users/${user}/repos?per_page=50&sort=updated`);
     ghReposCache = {
       originals: data.filter(r => !r.fork),
       forks:     data.filter(r => r.fork),
@@ -558,12 +393,15 @@ function matchNaturalLanguage(input) {
 //  and natural-language intent dispatch
 // ============================================================
 function respondAbout(respDiv) {
-  return typeText(respDiv, tStr('about', personalInfo.name, personalInfo.bio));
+  return typeText(respDiv, tStr('about', {
+    name: personal?.name ?? '',
+    bio: personal?.bio?.[locale] ?? '',
+  }));
 }
 
 function respondSkills(respDiv) {
   const title = tStr('skillsTitle');
-  const list = personalInfo.skills[locale]
+  const list = (personal?.skills?.[locale] ?? [])
     .map((s, i) => `  ${String(i + 1).padStart(2, ' ')}. ${s}`)
     .join('\n');
   return typeText(respDiv, `${title}\n${'-'.repeat(24)}\n${list}`);
@@ -573,7 +411,7 @@ function respondContact(respDiv) {
   return typeText(respDiv, [
     tStr('contactTitle'),
     '-'.repeat(24),
-    tStr('contact', personalInfo.contact),
+    tStr('contact', personal?.contact ?? {}),
   ].join('\n'));
 }
 
@@ -686,7 +524,7 @@ async function executeCommand(raw) {
       respDiv.innerHTML = '';
       await typeHTML(respDiv, formatStats(), 8);
     } else {
-      // === DeepSeek LLM Chat ===
+      // === DeepSeek LLM Chat (with Markdown rendering) ===
       respDiv.innerHTML = '<span class="spinner"></span>';
       streamAbort = new AbortController();
 
@@ -707,14 +545,23 @@ async function executeCommand(raw) {
               `<span class="err">${escapeHTML('[!] 出了点问题 — Something went wrong. Try again later.')}</span>`;
           }
         } else {
-          respDiv.innerHTML = '';
+          // Buffer the full response, then render Markdown
           const reader = resp.body.getReader();
-          await typeStream(respDiv, reader);
+          const fullText = await bufferStream(reader);
+
+          if (streamCancelled) {
+            respDiv.innerHTML = '<span class="dim">--- Cancelled ---</span>';
+          } else if (fullText) {
+            respDiv.innerHTML = '';
+            await typeHTML(respDiv, parseMarkdown(fullText));
+          } else {
+            respDiv.innerHTML =
+              `<span class="dim">${escapeHTML('[!] Empty response — try rephrasing.')}</span>`;
+          }
         }
       } catch (err) {
         if (streamCancelled || err.name === 'AbortError') {
-          respDiv.innerHTML =
-            '<span class="dim">--- Cancelled ---</span>';
+          respDiv.innerHTML = '<span class="dim">--- Cancelled ---</span>';
         } else {
           respDiv.innerHTML =
             `<span class="dim">${escapeHTML('[!] 网络连接失败 — Network error. Check your connection.')}</span>`;
@@ -781,15 +628,35 @@ terminalBody.addEventListener('click', () => {
 cmdInput.addEventListener('click', (e) => e.stopPropagation());
 
 // ============================================================
-//  Init
+//  Init — load JSON data, then bootstrap the terminal
 // ============================================================
-cmdInput.placeholder = tStr('placeholder');
-titleBar.textContent = tStr('titleBar');
+async function init() {
+  try {
+    const [pRes, iRes] = await Promise.all([
+      fetch('./data/personal.json'),
+      fetch('./data/i18n.json'),
+    ]);
+    if (!pRes.ok || !iRes.ok) throw new Error('Failed to load config');
+    personal = await pRes.json();
+    i18n     = await iRes.json();
+  } catch (e) {
+    document.body.innerHTML =
+      '<div style="color:#F92672;font-family:monospace;padding:2em;text-align:center;">' +
+      'Failed to load configuration.<br><br>' +
+      'Please check your connection and reload.</div>';
+    return;
+  }
 
-showStartupScreen();
-cmdInput.focus();
-scrollToBottom();
+  cmdInput.placeholder = tStr('placeholder');
+  titleBar.textContent = tStr('titleBar');
 
-// Pre-fetch GitHub data in background (unauthenticated)
-fetchGitHubProfile();
-fetchGitHubRepos();
+  showStartupScreen();
+  cmdInput.focus();
+  scrollToBottom();
+
+  // Pre-fetch GitHub data in background (unauthenticated)
+  fetchGitHubProfile();
+  fetchGitHubRepos();
+}
+
+init();
