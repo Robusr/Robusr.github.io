@@ -349,7 +349,7 @@ async function typeStream(element, reader) {
 }
 
 // ============================================================
-//  Startup: pixel logo + system info + full command list
+//  Startup: pixel logo + system info + hint
 // ============================================================
 function showStartupScreen() {
   // ---- Step 1: "Robusr" logo: upright colouring + row-shift slant ----
@@ -386,17 +386,11 @@ function showStartupScreen() {
   sysDiv.textContent = tStr('sysinfo', 'guest', personalInfo.tagline[locale]);
   output.appendChild(sysDiv);
 
-  // ---- Step 3: Separator ----
-  const sep = document.createElement('div');
-  sep.className = 'response';
-  sep.innerHTML = '<span class="dim">' + '='.repeat(48) + '</span>';
-  output.appendChild(sep);
-
-  // ---- Step 4: Full command list ----
-  const helpDiv = document.createElement('div');
-  helpDiv.className = 'welcome';
-  helpDiv.textContent = tStr('help');
-  output.appendChild(helpDiv);
+  // ---- Step 3: Short hint ----
+  const hintDiv = document.createElement('div');
+  hintDiv.className = 'response';
+  hintDiv.innerHTML = '<span class="dim">' + escapeHTML(tStr('placeholder')) + '</span>';
+  output.appendChild(hintDiv);
 
   scrollToBottom();
 }
