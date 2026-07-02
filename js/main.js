@@ -301,6 +301,54 @@ async function typeText(element, text, speed = 16) {
 }
 
 // ============================================================
+//  Streaming typewriter — driven by LLM SSE chunks
+//  Parses DeepSeek (OpenAI-compatible) SSE format:
+//    data: {"choices":[{"delta":{"content":"..."}}]}
+//    data: [DONE]
+// ============================================================
+async function typeStream(element, reader) {
+  isTyping = true;
+  cmdInput.disabled = true;
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') continue;
+
+        try {
+          const json = JSON.parse(data);
+          const content = json.choices?.[0]?.delta?.content;
+          if (content) {
+            element.innerHTML += escapeHTML(content).replace(/\n/g, '<br>');
+          }
+        } catch {}
+      }
+      scrollToBottom();
+    }
+  } catch {
+    element.innerHTML +=
+      '<span class="dim">\n--- Connection lost ---</span>';
+  }
+
+  isTyping = false;
+  cmdInput.disabled = false;
+  cmdInput.focus();
+  scrollToBottom();
+}
+
+// ============================================================
 //  Startup: pixel logo + system info + full command list
 // ============================================================
 function showStartupScreen() {
@@ -580,7 +628,7 @@ async function executeCommand(raw) {
     cmdInput.focus();
   }
 
-  // ---- Natural language ----
+  // ---- Natural language / LLM Chat ----
   else {
     const intent = matchNaturalLanguage(cmd);
     respDiv.innerHTML = '';
@@ -618,7 +666,33 @@ async function executeCommand(raw) {
       respDiv.innerHTML = '';
       await typeHTML(respDiv, formatStats(), 8);
     } else {
-      await typeText(respDiv, tStr('notFound'));
+      // === DeepSeek LLM Chat ===
+      respDiv.innerHTML = '<span class="spinner"></span>';
+
+      try {
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: cmd }),
+        });
+
+        if (!resp.ok) {
+          if (resp.status === 429) {
+            respDiv.innerHTML =
+              `<span class="warn">${escapeHTML('[!] 太快啦，请等几秒再试 — Too fast, wait a moment.')}</span>`;
+          } else {
+            respDiv.innerHTML =
+              `<span class="err">${escapeHTML('[!] 出了点问题 — Something went wrong. Try again later.')}</span>`;
+          }
+        } else {
+          respDiv.innerHTML = '';
+          const reader = resp.body.getReader();
+          await typeStream(respDiv, reader);
+        }
+      } catch {
+        respDiv.innerHTML =
+          `<span class="dim">${escapeHTML('[!] 网络连接失败 — Network error. Check your connection.')}</span>`;
+      }
     }
   }
 }
