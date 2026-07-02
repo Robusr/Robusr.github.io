@@ -2,6 +2,54 @@
    Robusr's Utopia — Terminal-style personal homepage
    ============================================================ */
 
+/* ===== Design Tokens (override for theming) ===== */
+:root {
+  /* Background */
+  --bg-terminal: rgba(30, 30, 40, 0.72);
+  --bg-titlebar: rgba(50, 50, 58, 0.5);
+  --bg-code-block: rgba(0, 0, 0, 0.3);
+
+  /* Text */
+  --text-primary: #F8F8F2;
+  --text-body: #C0C0C8;
+  --text-dim: #8888A0;
+  --text-titlebar: rgba(255, 255, 255, 0.45);
+  --text-placeholder: rgba(255, 255, 255, 0.2);
+
+  /* Accent */
+  --green: #A6E22E;
+  --cyan: #66D9EF;
+  --yellow: #FFBD2E;
+  --red: #F92672;
+  --code-yellow: #FFD866;
+
+  /* Traffic lights */
+  --tl-red: #FF5F57;
+  --tl-yellow: #FFBD2E;
+  --tl-green: #28CA41;
+
+  /* Borders */
+  --border-terminal: rgba(255, 255, 255, 0.14);
+  --border-titlebar: rgba(255, 255, 255, 0.06);
+  --border-code: rgba(255, 255, 255, 0.08);
+  --border-code-inline: rgba(255, 216, 102, 0.15);
+
+  /* Spinner */
+  --spinner-track: rgba(255, 255, 255, 0.2);
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
+
+  /* Shadows */
+  --shadow-terminal: 0 25px 70px rgba(0, 0, 0, 0.55),
+                     0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+
+  /* Tag / Badge */
+  --tag-bg: rgba(255, 189, 46, 0.12);
+  --code-bg: rgba(255, 216, 102, 0.1);
+}
+
 /* ===== Reset & Base ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -28,14 +76,12 @@ html, body {
   margin: 3vh auto 0;
   display: flex;
   flex-direction: column;
-  background: rgba(30, 30, 40, 0.72);
+  background: var(--bg-terminal);
   backdrop-filter: blur(24px) saturate(140%);
   -webkit-backdrop-filter: blur(24px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--border-terminal);
   border-radius: 10px;
-  box-shadow:
-    0 25px 70px rgba(0, 0, 0, 0.55),
-    0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  box-shadow: var(--shadow-terminal);
   overflow: hidden;
 }
 
@@ -45,8 +91,8 @@ html, body {
   align-items: center;
   height: 36px;
   padding: 0 12px;
-  background: rgba(50, 50, 58, 0.5);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-titlebar);
+  border-bottom: 1px solid var(--border-titlebar);
   user-select: none;
   cursor: default;
   flex-shrink: 0;
@@ -64,15 +110,15 @@ html, body {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.light.red    { background: #FF5F57; }
-.light.yellow { background: #FFBD2E; }
-.light.green  { background: #28CA41; }
+.light.red    { background: var(--tl-red); }
+.light.yellow { background: var(--tl-yellow); }
+.light.green  { background: var(--tl-green); }
 
 .title {
   flex: 1;
   text-align: center;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--text-titlebar);
   letter-spacing: 0.5px;
   white-space: nowrap;
   overflow: hidden;
@@ -92,13 +138,13 @@ html, body {
 .body::-webkit-scrollbar { width: 5px; }
 .body::-webkit-scrollbar-track { background: transparent; }
 .body::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.12);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 .body::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.22);
+  background: var(--scrollbar-thumb-hover);
 }
-.body { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+.body { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
 
 /* ===== Output Area ===== */
 .output {
@@ -114,12 +160,12 @@ html, body {
   font-size: 14px;
 }
 
-.prompt-arrow { color: #A6E22E; }
-.prompt-path  { color: #66D9EF; }
-.cmd-text     { color: #F8F8F2; margin-left: 4px; word-break: break-all; }
+.prompt-arrow { color: var(--green); }
+.prompt-path  { color: var(--cyan); }
+.cmd-text     { color: var(--text-primary); margin-left: 4px; word-break: break-all; }
 
 .response {
-  color: #C0C0C8;
+  color: var(--text-body);
   font-size: 13.5px;
   line-height: 1.65;
   white-space: pre-wrap;
@@ -127,17 +173,17 @@ html, body {
   padding-bottom: 10px;
 }
 
-.response a        { color: #66D9EF; text-decoration: underline; text-underline-offset: 3px; }
-.response .hl      { color: #A6E22E; }
-.response .dim     { color: #8888A0; }
-.response .accent  { color: #66D9EF; }
-.response .bold    { color: #F8F8F2; font-weight: bold; }
-.response .warn    { color: #FFBD2E; }
-.response .err     { color: #F92672; }
+.response a        { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; }
+.response .hl      { color: var(--green); }
+.response .dim     { color: var(--text-dim); }
+.response .accent  { color: var(--cyan); }
+.response .bold    { color: var(--text-primary); font-weight: bold; }
+.response .warn    { color: var(--yellow); }
+.response .err     { color: var(--red); }
 .response .tag     {
   display: inline-block;
-  color: #FFBD2E;
-  background: rgba(255, 189, 46, 0.12);
+  color: var(--yellow);
+  background: var(--tag-bg);
   padding: 0 6px;
   border-radius: 3px;
   font-size: 11px;
@@ -149,25 +195,57 @@ html, body {
 .response code {
   font-family: 'Fira Code', 'Menlo', 'Consolas', 'SF Mono', 'Monaco', monospace;
   font-size: 12.5px;
-  color: #FFD866;
-  background: rgba(255, 216, 102, 0.1);
+  color: var(--code-yellow);
+  background: var(--code-bg);
   padding: 1px 5px;
   border-radius: 3px;
-  border: 1px solid rgba(255, 216, 102, 0.15);
+  border: 1px solid var(--border-code-inline);
 }
 
 .response pre {
   margin: 6px 0;
   padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-code-block);
+  border: 1px solid var(--border-code);
   border-radius: 6px;
   overflow-x: auto;
   line-height: 1.5;
 }
 
+/* Code block wrapper + copy button */
+.response .code-block {
+  position: relative;
+  margin: 6px 0;
+}
+
+.response .code-block pre {
+  margin: 0;
+  padding-top: 32px;  /* room for the copy button */
+}
+
+.response .copy-btn {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  padding: 3px 10px;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-code);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  z-index: 1;
+}
+
+.response .copy-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .response pre code {
-  color: #C0C0C8;
+  color: var(--text-body);
   background: none;
   padding: 0;
   border: none;
@@ -185,7 +263,7 @@ html, body {
 }
 
 .welcome {
-  color: #8888A0;
+  color: var(--text-dim);
   font-size: 13px;
   line-height: 1.7;
   white-space: pre-wrap;
@@ -200,7 +278,7 @@ html, body {
 }
 
 .sysinfo {
-  color: #C0C0C8;
+  color: var(--text-body);
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -221,27 +299,36 @@ html, body {
   background: transparent;
   border: none;
   outline: none;
-  color: #F8F8F2;
+  color: var(--text-primary);
   font-family: inherit;
   font-size: 14px;
-  caret-color: #A6E22E;
+  caret-color: var(--green);
   margin-left: 4px;
   min-width: 20px;
 }
 
-#cmdInput::placeholder { color: rgba(255,255,255,0.2); }
+#cmdInput::placeholder { color: var(--text-placeholder); }
 
 /* ===== Spinner ===== */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner {
   display: inline-block;
   width: 12px; height: 12px;
-  border: 2px solid rgba(255,255,255,0.2);
-  border-top-color: #66D9EF;
+  border: 2px solid var(--spinner-track);
+  border-top-color: var(--cyan);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
   margin-right: 6px;
   vertical-align: middle;
+}
+
+/* ===== Accessibility ===== */
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ===== Mobile ===== */

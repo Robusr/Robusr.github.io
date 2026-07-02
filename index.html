@@ -3,7 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Robusr's Utopia">
+<meta name="description" content="Robusr's Utopia — A macOS Terminal-style personal homepage. Chat with an AI-powered persona, browse projects, and explore the mind of a robotics student.">
+
+<!-- Open Graph (Facebook, LinkedIn, WeChat, etc.) -->
+<meta property="og:title" content="Robusr's Utopia">
+<meta property="og:description" content="A macOS Terminal-style personal homepage — chat with Robusr's AI persona, browse GitHub projects, and explore.">
+<meta property="og:image" content="https://robusr.cn/assets/img/example.png">
+<meta property="og:url" content="https://robusr.cn">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Robusr's Utopia">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Robusr's Utopia">
+<meta name="twitter:description" content="A macOS Terminal-style personal homepage — chat with Robusr's AI persona, browse GitHub projects, and explore.">
+<meta name="twitter:image" content="https://robusr.cn/assets/img/example.png">
+
 <link rel="icon" type="image/jpeg" href="./assets/img/Robusr_32.jpeg">
 <title>guest@Robusr's Utopia</title>
 <link rel="preconnect" href="https://api.deepseek.com">
@@ -14,7 +29,7 @@
 
 <div class="bg"></div>
 
-<div class="terminal">
+<div class="terminal" role="application" aria-label="Terminal">
   <div class="titlebar">
     <div class="traffic-lights">
       <span class="light red"></span>
@@ -25,12 +40,13 @@
   </div>
 
   <div class="body" id="terminalBody">
-    <div class="output" id="output"></div>
+    <div class="output" id="output" role="log" aria-live="polite" aria-relevant="additions"></div>
     <div class="input-line">
       <span class="prompt-arrow">$</span>
       <span class="prompt-path">~</span>
       <input type="text" id="cmdInput" autofocus
-             autocomplete="off" autocapitalize="off" spellcheck="false">
+             autocomplete="off" autocapitalize="off" spellcheck="false"
+             aria-label="Type a command or question">
     </div>
   </div>
 </div>

@@ -22,10 +22,33 @@ function escapeHTML(str) {
 function parseMarkdown(text) {
   if (!text) return '';
 
+  // ---- Per-call list state (closure-isolated, not module-global) ----
+  let _listKind = null;
+
+  function openList(buf, tag) {
+    if (_listKind === tag) return;
+    if (_listKind !== null) closeList(buf);
+    buf.push(tag);
+    _listKind = tag;
+  }
+  function closeList(buf) {
+    if (_listKind === null) return;
+    buf.push(_listKind === '<ul>' ? '</ul>' : '</ol>');
+    _listKind = null;
+  }
+  function flushList(buf) { closeList(buf); }
+
   // ---- Step 0: guard — extract & protect fenced code blocks ----
   const fences = [];
   let html = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-    const i = fences.push(`<pre><code>${escapeHTML(code.trim())}</code></pre>`);
+    const escaped = escapeHTML(code.trim());
+    const i = fences.push(
+      `<div class="code-block">` +
+        `<button class="copy-btn" aria-label="Copy code"` +
+          `onclick="var t=this;navigator.clipboard.writeText(this.nextElementSibling.textContent).then(()=>{t.textContent='Copied!';setTimeout(()=>{t.textContent='Copy'},1500)})">Copy</button>` +
+        `<pre><code>${escaped}</code></pre>` +
+      `</div>`
+    );
     return `\x00FENCE${i - 1}\x00`;
   });
 
@@ -111,35 +134,20 @@ function parseInline(text) {
   // Inline code  `…`  (before bold/italic so backticks inside don't leak)
   out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
 
-  // Bold  **…**
-  out = out.replace(/\*\*(.+?)\*\*/g, '<span class="bold">$1</span>');
-
-  // Italic  *…*  (single asterisk, not matching **)
-  out = out.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<span class="dim">$1</span>');
-
   // Links  [text](url)
   out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" target="_blank" rel="noopener" class="accent">$1</a>');
 
+  // Bold + italic: iterate until stable → supports nesting
+  //   **bold *and italic***  →  <span class="bold">bold <span class="dim">and italic</span></span>
+  //   *italic **and bold***  →  <span class="dim">italic <span class="bold">and bold</span></span>
+  let prev;
+  do {
+    prev = out;
+    out = out.replace(/\*\*(.+?)\*\*/g, '<span class="bold">$1</span>');
+    out = out.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<span class="dim">$1</span>');
+  } while (out !== prev);
+
   return out;
 }
 
-// ---- List-builder helpers ----
-let _listKind = null;
-
-function openList(buf, tag) {
-  if (_listKind === tag) return;        // already open, same kind
-  if (_listKind !== null) closeList(buf); // different kind → close first
-  buf.push(tag);
-  _listKind = tag;
-}
-
-function closeList(buf) {
-  if (_listKind === null) return;
-  buf.push(_listKind === '<ul>' ? '</ul>' : '</ol>');
-  _listKind = null;
-}
-
-function flushList(buf) {
-  closeList(buf);
-}

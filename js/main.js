@@ -116,6 +116,16 @@ async function typeHTML(element, html, speed = 16) {
   isTyping = true;
   cmdInput.disabled = true;
 
+  // Respect accessibility preference — instant output, no animation
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    element.innerHTML = html;
+    isTyping = false;
+    cmdInput.disabled = false;
+    cmdInput.focus();
+    scrollToBottom();
+    return;
+  }
+
   let out = '';
   let i = 0;
 
@@ -628,9 +638,21 @@ terminalBody.addEventListener('click', () => {
 cmdInput.addEventListener('click', (e) => e.stopPropagation());
 
 // ============================================================
-//  Init — load JSON data, then bootstrap the terminal
+//  Init — show terminal shell immediately, fill data when ready
 // ============================================================
 async function init() {
+  // ---- Phase 1: instant — terminal shell is already in the DOM ----
+  cmdInput.placeholder = 'Loading...';
+  cmdInput.disabled = true;
+
+  // Subtle loading indicator while JSON is fetched
+  const loadDiv = document.createElement('div');
+  loadDiv.className = 'response';
+  loadDiv.innerHTML = '<span class="spinner"></span> <span class="dim">Loading...</span>';
+  output.appendChild(loadDiv);
+
+  // ---- Phase 2: fetch config (network) ----
+  let ok = true;
   try {
     const [pRes, iRes] = await Promise.all([
       fetch('./data/personal.json'),
@@ -640,15 +662,34 @@ async function init() {
     personal = await pRes.json();
     i18n     = await iRes.json();
   } catch (e) {
-    document.body.innerHTML =
-      '<div style="color:#F92672;font-family:monospace;padding:2em;text-align:center;">' +
-      'Failed to load configuration.<br><br>' +
-      'Please check your connection and reload.</div>';
+    ok = false;
+  }
+
+  // Remove loading indicator
+  output.innerHTML = '';
+
+  if (!ok) {
+    const errDiv = document.createElement('div');
+    errDiv.className = 'response';
+    errDiv.innerHTML =
+      '<span class="err">[!] Failed to load configuration.</span><br><br>' +
+      '<span class="dim">Check your connection and try again.</span><br><br>' +
+      '<button onclick="output.innerHTML=\'\';init()" ' +
+        'style="font-family:inherit;font-size:13px;padding:4px 14px;' +
+        'color:var(--text-primary, #F8F8F2);background:rgba(255,255,255,0.08);' +
+        'border:1px solid var(--border-code, rgba(255,255,255,0.08));' +
+        'border-radius:4px;cursor:pointer;">Retry</button>';
+    output.appendChild(errDiv);
+    cmdInput.placeholder = 'Reload page to retry...';
+    cmdInput.disabled = false;
+    cmdInput.focus();
     return;
   }
 
+  // ---- Phase 3: bootstrap the full UI ----
   cmdInput.placeholder = tStr('placeholder');
   titleBar.textContent = tStr('titleBar');
+  cmdInput.disabled = false;
 
   showStartupScreen();
   cmdInput.focus();
