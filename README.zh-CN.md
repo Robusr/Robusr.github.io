@@ -2,9 +2,9 @@
 
 [ [English](./README.md) ]
 
-一个模拟 macOS 终端交互的个人主页。访客可以输入命令或直接用自然语言
-提问，了解我的个人信息、浏览 GitHub 项目、查看实时统计数据 --
-一切都在一个毛玻璃终端窗口中完成。
+一个模拟 macOS 终端交互的个人主页。访客可以输入命令、提问或自由聊天 --
+由 DeepSeek AI 驱动，搭载从真实的 Robusr 蒸馏而来的人格设定。
+一切都在毛玻璃终端窗口中完成，访问 [robusr.cn](https://robusr.cn)。
 
 ![终端截屏](./assets/img/example.png)
 
@@ -12,8 +12,11 @@
 
 - **macOS 风格终端窗口** -- 红黄绿交通灯标题栏、圆角、毛玻璃背景模糊
   效果（backdrop-filter），覆盖全屏背景图
-- **Oh My Zsh 风格提示符**（`$ ~`），支持上下箭头浏览历史命令
+- **Oh My Zsh 风格提示符**（`$ ~`），支持上下箭头浏览历史命令，
+  Ctrl+L 清屏
 - **打字机效果输出** -- 回复内容逐字打印，模拟真实终端体验
+- **AI 对话** -- 不匹配命令的输入通过 Cloudflare Pages Function 路由到
+  DeepSeek，以 Robusr 的说话风格流式回复。按 Esc 可中断正在进行的回复
 - **ASCII 像素风 Logo** -- 斜体 "Robusr" 文字，逐字母彩虹配色
   （通过 Pillow 离线生成）
 - **中英双语 i18n** -- 默认英文，输入 `lang` 命令可切换为中文
@@ -21,7 +24,6 @@
 - **自然语言匹配** -- 可用中英文直接提问，如 "你是谁？"、"你会什么？"、
   "看看你的项目"
 - **响应式布局** -- 移动端自适应，字体和边距自动缩小
-- **纯静态站点** -- 无框架、无打包工具、无运行时外部依赖
 
 ## 可用命令
 
@@ -36,25 +38,31 @@
 | `lang` | `zh`, `en` | 切换中 / 英文 |
 | `clear` | `cls` | 清屏 |
 
-也可以直接自然语言提问，例如 "你会什么？"、"你是谁？"、
-"怎么联系你？"。
+任何不匹配命令的输入都会发送给 LLM。你可以自然聊天，询问 Robusr 的
+经历背景，讨论机器人或技术话题，或者只是打个招呼。
 
 ## 项目结构
 
 ```
 .
-├── index.html              # HTML 骨架（38 行）
+├── index.html                # HTML 骨架
 ├── css/
-│   └── style.css           # 全部样式（221 行）
+│   └── style.css             # 全部样式
 ├── js/
-│   └── main.js             # 终端引擎、i18n、命令逻辑（677 行）
+│   └── main.js               # 终端引擎、i18n、命令逻辑、LLM 客户端
+├── functions/
+│   └── api/
+│       └── chat.js           # Cloudflare Pages Function -- DeepSeek API 代理
+├── prompt/
+│   └── system.js             # 系统提示词（Robusr 人格 + 场景适配）
 ├── assets/
 │   └── img/
-│       ├── Street.jpg      # 全屏背景图
-│       ├── Robusr.jpeg     # 网站图标
-│       └── example.png     # README 截屏
+│       ├── Street.webp       # 全屏背景图（WebP）
+│       ├── Robusr.jpeg       # 原始头像
+│       ├── Robusr_32.jpeg    # 网站图标（32x32）
+│       └── example.png       # README 截屏
 ├── scripts/
-│   └── ascii_gen.py        # ASCII Logo 离线生成工具（Pillow）
+│   └── ascii_gen.py          # ASCII Logo 离线生成工具（Pillow）
 ├── .gitignore
 ├── README.md
 └── README.zh-CN.md
@@ -76,6 +84,13 @@ const personalInfo = {
 };
 ```
 
+### 系统提示词
+
+编辑 [prompt/system.js](prompt/system.js) 来修改 AI 人格。
+文件包含 Part A（自我记忆、价值观、重要经历）和 Part B
+（人格模型，含说话风格、情感模式和社交行为）。
+文件是标准 ES 模块，导出 `SYSTEM_PROMPT` 模板字符串。
+
 ### ASCII Logo
 
 Logo 像素图已预计算并存储为 `LOGO_UP` 常量。
@@ -93,18 +108,27 @@ python3 scripts/ascii_gen.py "你的名字"
 
 ### 背景图
 
-将 `assets/img/Street.jpg` 替换为你自己的图片。
+将 `assets/img/Street.webp` 替换为你自己的图片。
 如更改文件名，需同步更新 [css/style.css](css/style.css) 中
 `.bg` 规则的 URL。
 
 ## 部署
 
-本项目专为 **GitHub Pages** 设计。将仓库推送到
-`<username>.github.io`，在仓库设置中启用 Pages
-（根目录、main 分支）即可，无需构建步骤。
+本站部署在 **Cloudflare Pages**，绑定自定义域名
+[robusr.cn](https://robusr.cn)。`/api/chat` 端点由
+Cloudflare Pages Function（`functions/api/chat.js`）处理，
+代理转发到 DeepSeek API。
 
-其他静态托管平台（Netlify、Vercel、Cloudflare Pages）
-只需将部署目录指向仓库根目录。
+自行部署步骤：
+
+1. 将仓库推送到 GitHub
+2. 在 Cloudflare Pages：创建项目，连接仓库，
+   Framework preset 选 **None**，Build output directory 设为 `.`
+3. 在项目设置中添加环境变量 `DEEPSEEK_API_KEY`
+4. （可选）绑定自定义域名
+
+本站也可以直接作为 GitHub Pages 静态站点部署 -- LLM 对话功能
+在 `/api/chat` 不可用时仅显示错误提示，不影响其他功能。
 
 ## 技术栈
 
@@ -113,8 +137,10 @@ python3 scripts/ascii_gen.py "你的名字"
 | 标记 | HTML5 |
 | 样式 | CSS3（Flexbox、backdrop-filter、自定义滚动条） |
 | 逻辑 | 原生 JavaScript（ES2020+） |
+| 后端 | Cloudflare Pages Functions（Node.js，零外部依赖） |
+| AI | DeepSeek API（`deepseek-chat`，流式 SSE） |
 | 字体 | Fira Code / Menlo / Consolas / SF Mono（系统字体栈） |
-| API | GitHub REST API（未认证，仅公开数据） |
+| 数据 | GitHub REST API（未认证，仅公开数据） |
 | Logo 生成 | Python 3 + Pillow（离线） |
 
 ## 许可证

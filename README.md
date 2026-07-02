@@ -3,9 +3,9 @@
 [ [中文](./README.zh-CN.md) ]
 
 A macOS Terminal-style personal homepage that simulates an interactive
-shell session.  Visitors can type commands or ask natural-language
-questions to learn about me, browse my GitHub projects, and view live
-profile statistics -- all inside a frosted-glass terminal window.
+shell session. Visitors can type commands, ask questions, or chat freely --
+powered by DeepSeek AI with a custom persona distilled from the real Robusr.
+Everything runs inside a frosted-glass terminal window at [robusr.cn](https://robusr.cn).
 
 ![Terminal Screenshot](./assets/img/example.png)
 
@@ -14,9 +14,12 @@ profile statistics -- all inside a frosted-glass terminal window.
 - **macOS terminal window** with traffic-light title bar, rounded
   corners, and backdrop-blur glassmorphism over a fullscreen background
 - **Oh My Zsh style prompt** (`$ ~`) with command history navigable via
-  Arrow-Up / Arrow-Down
+  Arrow-Up / Arrow-Down and Ctrl+L to clear
 - **Typewriter-effect responses** -- output is printed character by
   character for a realistic terminal feel
+- **AI-powered chat** -- unmatched input is routed to DeepSeek via a
+  Cloudflare Pages Function, responding in Robusr's own voice with
+  streaming text. Press Esc to cancel an in-progress response
 - **ASCII pixel-art logo** rendered in italic with per-letter rainbow
   colours (generated offline via Pillow)
 - **Dual-language i18n** -- English by default, toggle to Chinese with
@@ -27,8 +30,6 @@ profile statistics -- all inside a frosted-glass terminal window.
   do?", or "Show me your projects" in either English or Chinese
 - **Responsive layout** -- adapts to mobile viewports with smaller
   fonts and tighter margins
-- **Single static site** -- no framework, no bundler, no external
-  dependencies at runtime
 
 ## Commands
 
@@ -43,27 +44,35 @@ profile statistics -- all inside a frosted-glass terminal window.
 | `lang` | `zh`, `en` | Toggle between English and Chinese |
 | `clear` | `cls` | Clear the terminal screen |
 
-You can also ask questions naturally (e.g. "What can you do?",
-"Who are you?", "How to reach you?").
+Anything that does not match a command is sent to the LLM. You can chat
+naturally, ask about Robusr's background, discuss robotics or technology,
+or just say hello.
 
 ## Project Structure
 
 ```
 .
-├── index.html              # HTML skeleton (38 lines)
+├── index.html                # HTML skeleton
 ├── css/
-│   └── style.css           # All styles (221 lines)
+│   └── style.css             # All styles
 ├── js/
-│   └── main.js             # Terminal engine, i18n, commands (677 lines)
+│   └── main.js               # Terminal engine, i18n, commands, LLM client
+├── functions/
+│   └── api/
+│       └── chat.js           # Cloudflare Pages Function -- DeepSeek API proxy
+├── prompt/
+│   └── system.js             # System prompt (Robusr persona + scene adaptation)
 ├── assets/
 │   └── img/
-│       ├── Street.jpg      # Fullscreen background
-│       ├── Robusr.jpeg     # Favicon
-│       └── example.png     # README screenshot
+│       ├── Street.webp       # Fullscreen background (WebP)
+│       ├── Robusr.jpeg       # Original avatar
+│       ├── Robusr_32.jpeg    # Favicon (32x32)
+│       └── example.png       # README screenshot
 ├── scripts/
-│   └── ascii_gen.py        # Offline ASCII logo generator (Pillow)
+│   └── ascii_gen.py          # Offline ASCII logo generator (Pillow)
 ├── .gitignore
-└── README.md
+├── README.md
+└── README.zh-CN.md
 ```
 
 ## Customisation
@@ -82,6 +91,14 @@ const personalInfo = {
 };
 ```
 
+### System Prompt
+
+Edit [prompt/system.js](prompt/system.js) to change the AI persona.
+It contains Part A (self memory, values, key experiences) and
+Part B (personality model with speaking style, emotional patterns,
+and social behaviour). The file is a standard ES module exporting
+a `SYSTEM_PROMPT` template literal.
+
 ### ASCII Logo
 
 The pixel-art logo is pre-computed and stored as a `LOGO_UP` constant.
@@ -99,17 +116,26 @@ Requirements: Python 3 with [Pillow](https://python-pillow.org/)
 
 ### Background Image
 
-Replace `assets/img/Street.jpg` with your own image.  Update the URL in
+Replace `assets/img/Street.webp` with your own image.  Update the URL in
 [css/style.css](css/style.css) (`.bg` rule) if you change the filename.
 
 ## Deployment
 
-This site is designed for **GitHub Pages**.  Push the repository to
-`<username>.github.io` and enable Pages in the repository settings
-(root directory, main branch).  No build step is required.
+The site is deployed on **Cloudflare Pages** with a custom domain at
+[robusr.cn](https://robusr.cn). The `/api/chat` endpoint is handled by
+a Cloudflare Pages Function (`functions/api/chat.js`) that proxies
+requests to the DeepSeek API.
 
-For other static hosts (Netlify, Vercel, Cloudflare Pages), point the
-deploy directory at the repository root.
+To deploy your own:
+
+1. Push the repository to GitHub
+2. In Cloudflare Pages: Create a new project, connect the repo,
+   set Framework preset to **None**, Build output directory to `.`
+3. Add environment variable `DEEPSEEK_API_KEY` in project settings
+4. (Optional) Bind a custom domain
+
+The site also works as a static GitHub Pages deployment -- the LLM chat
+simply falls back to an error message when `/api/chat` is unavailable.
 
 ## Tech Stack
 
@@ -118,8 +144,10 @@ deploy directory at the repository root.
 | Markup | HTML5 |
 | Styling | CSS3 (Flexbox, backdrop-filter, custom scrollbars) |
 | Logic | Vanilla JavaScript (ES2020+) |
+| Backend | Cloudflare Pages Functions (Node.js, zero dependencies) |
+| AI | DeepSeek API (`deepseek-chat`, streaming SSE) |
 | Font | Fira Code / Menlo / Consolas / SF Mono (system stack) |
-| API | GitHub REST API (unauthenticated, public data) |
+| Data | GitHub REST API (unauthenticated, public data) |
 | Logo gen | Python 3 + Pillow (offline) |
 
 ## License
