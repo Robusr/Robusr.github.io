@@ -261,14 +261,6 @@ html, body {
 .response li {
   margin: 2px 0;
 }
-
-.welcome {
-  color: var(--text-dim);
-  font-size: 13px;
-  line-height: 1.7;
-  white-space: pre-wrap;
-}
-
 /* ASCII logo */
 .ascii-logo {
   font-size: 12px;
